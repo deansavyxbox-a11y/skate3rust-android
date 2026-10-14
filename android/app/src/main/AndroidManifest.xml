@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />
     <application android:label="Skate 3 Rust" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false" android:extractNativeLibs="true">
         <activity android:name=".SetupActivity" android:exported="true" android:screenOrientation="sensorLandscape" android:theme="@style/Theme.SkateLaunch">
@@ -16,5 +19,6 @@
             android:theme="@style/Theme.SkateLaunch">
             <meta-data android:name="android.app.lib_name" android:value="skate3rust_android" />
         </activity>
+        <service android:name=".ImportService" android:exported="false" android:foregroundServiceType="dataSync" />
     </application>
 </manifest>

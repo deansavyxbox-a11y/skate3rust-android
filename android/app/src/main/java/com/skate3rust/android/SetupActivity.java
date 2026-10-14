@@ -41,7 +41,7 @@ public final class SetupActivity extends Activity {
         Button zip=button("IMPORT PREPARED ASSETS (.ZIP)",()->pick(PICK_ZIP));page.addView(zip,buttonLayout());
         Button iso=button("IMPORT XBOX 360 ISO",()->pick(PICK_ISO));page.addView(iso,buttonLayout());
         selected=new TextView(this);selected.setTextColor(0xffdddddd);selected.setGravity(Gravity.CENTER);page.addView(selected,wrap());
-        importButton=button("CONTINUE IMPORT",()->showNotice("Import service is starting in the next setup step."));importButton.setEnabled(false);page.addView(importButton,buttonLayout());
+        importButton=button("CONTINUE IMPORT",this::startImport);importButton.setEnabled(false);page.addView(importButton,buttonLayout());
         Button restore=button("RESTORE PREVIOUS ASSETS",this::restore);restore.setEnabled(new File(getFilesDir(),"installation.previous/complete.json").isFile());page.addView(restore,buttonLayout());
         notice=new TextView(this);notice.setTextColor(0xffffcf75);notice.setGravity(Gravity.CENTER);page.addView(notice,wrap());
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(page);setContentView(scroll);refreshStatus();
@@ -64,8 +64,17 @@ public final class SetupActivity extends Activity {
         pendingUri=data.getData();pendingType=requestCode;pendingName=ImportSource.displayName(this,pendingUri);showSelection();
     }
     private void showSelection() {
-        selected.setText("Selected: "+pendingName+"\nOriginal file will remain untouched.");importButton.setEnabled(true);
-        showNotice(pendingType==PICK_ZIP?"Prepared asset ZIP. Game data is copied into private app storage.":"Xbox 360 ISO. Extraction and conversion run on this device.");
+        selected.setText("Selected: "+pendingName+"\nOriginal file will remain untouched.");
+        importButton.setEnabled(pendingType==PICK_ZIP);
+        showNotice(pendingType==PICK_ZIP?"Prepared asset ZIP. Game data is copied into private app storage.":"Direct ISO conversion is still being developed. You can import a prepared asset ZIP now.");
+    }
+    private void startImport() {
+        if(pendingUri==null)return;
+        Intent intent=new Intent(this,ImportService.class).setAction(ImportService.ACTION_IMPORT).setData(pendingUri)
+            .putExtra(ImportService.EXTRA_KIND,pendingType==PICK_ZIP?ImportService.KIND_ZIP:ImportService.KIND_ISO)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {if(android.os.Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);importButton.setEnabled(false);showNotice("Import running. You can leave this screen while Android continues the job.");}
+        catch(RuntimeException e){showNotice("Could not start import: "+e.getMessage());}
     }
     private void restore() {
         try{store.restorePrevious();notice.setText("Previous asset installation restored.");refreshStatus();}
@@ -73,6 +82,20 @@ public final class SetupActivity extends Activity {
     }
     private void showRecoveryError(IOException error) {
         TextView message=new TextView(this);message.setText("Asset recovery needs attention. Your previous files have been kept.\n\n"+error.getMessage());message.setTextColor(0xffffffff);message.setGravity(Gravity.CENTER);message.setPadding(dp(24),dp(24),dp(24),dp(24));setContentView(message);
+    }
+    @Override protected void onResume(){super.onResume();if(store!=null)refreshJobState();}
+    private void refreshJobState(){
+        android.content.SharedPreferences prefs=getSharedPreferences(ImportService.PREFS,MODE_PRIVATE);String value=prefs.getString("phase","");
+        if(value.isEmpty())return;
+        ImportModel.Phase phase;try{phase=ImportModel.Phase.valueOf(value);}catch(IllegalArgumentException e){return;}
+        if(phase==ImportModel.Phase.COMPLETE){showNotice("Import complete. Assets are ready to play.");refreshStatus();return;}
+        if(phase==ImportModel.Phase.INTERRUPTED){
+            String uri=prefs.getString("uri","");String kind=prefs.getString("kind","");
+            if(!uri.isEmpty()&&ImportService.KIND_ZIP.equals(kind)){pendingUri=Uri.parse(uri);pendingType=PICK_ZIP;pendingName=ImportSource.displayName(this,pendingUri);selected.setText("Import stopped before completion. Retry the selected package when ready.");importButton.setText("RETRY PREPARED ZIP IMPORT");importButton.setEnabled(true);}
+            showNotice("Android stopped the import. The previous installation remains available.");return;
+        }
+        if(!ImportJobState.terminal(phase))showNotice("Asset import is running in the background: "+phase.name().toLowerCase().replace('_',' ')+".");
+        else if(phase==ImportModel.Phase.FAILED||phase==ImportModel.Phase.CANCELLED)showNotice(prefs.getString("message","Import did not finish."));
     }
     private void showNotice(String text){if(notice!=null)notice.setText(text);}
     private Button button(String text,Runnable action) {Button b=new Button(this);b.setText(text);b.setOnClickListener(v->action.run());return b;}
