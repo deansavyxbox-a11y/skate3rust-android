@@ -41,6 +41,7 @@ public final class GameActivity extends NativeActivity implements InputManager.I
     }};
     private boolean physicalController;
     @Override public void onCreate(Bundle state) {
+        NativeSession.begin();
         super.onCreate(state);
         getWindow().takeInputQueue(null);
         touch=new TouchControlsView(this,this::sendTouch);
@@ -96,7 +97,7 @@ public final class GameActivity extends NativeActivity implements InputManager.I
     @Override public void onWindowFocusChanged(boolean focused) {super.onWindowFocusChanged(focused); windowFocused=focused; if(!focused)reset(); publishFocus();if(focused)updateTouchWindow();}
     @Override public void onResume() {super.onResume(); resumed=true;touch.reloadLayout();startupStage=StartupStatus.stage(); windowFocused=getWindow().getDecorView().hasWindowFocus(); hasAudioFocus=audio.requestAudioFocus(focus)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED; publishFocus(); findController();uiHandler.removeCallbacks(pollUi);uiHandler.post(pollUi);}
     @Override public void onPause() {resumed=false;uiHandler.removeCallbacks(pollUi); reset();updateTouchWindow(); audioActive(false); audio.abandonAudioFocusRequest(focus); super.onPause();}
-    @Override public void onDestroy() {touchWindow.dismiss();input.unregisterInputDeviceListener(this); super.onDestroy();}
+    @Override public void onDestroy() {touchWindow.dismiss();input.unregisterInputDeviceListener(this);if(isFinishing())NativeSession.end();super.onDestroy();}
     @Override public void onInputDeviceAdded(int id) { if(gamepad(InputDevice.getDevice(id))) findController(); }
     @Override public void onInputDeviceChanged(int id) {if(id==device || gamepad(InputDevice.getDevice(id))) findController();}
     @Override public void onInputDeviceRemoved(int id) {findController();}
