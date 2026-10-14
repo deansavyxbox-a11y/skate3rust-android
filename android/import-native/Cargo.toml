@@ -1,0 +1,14 @@
+[package]
+name = "skate3rust_import"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+skate-import = { path = "../../crates/skate-import" }
+jni.workspace = true
+serde_json.workspace = true
+

@@ -22,7 +22,7 @@ if ($env:CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS -notlike '*max-page-size=1
 Push-Location $repoRoot
 try {
     $operation = if ($Check) { 'check' } else { 'build' }
-    & cargo $operation --locked -p skate3rust_android --target aarch64-linux-android --profile $Profile
+    & cargo $operation --locked -p skate3rust_android -p skate3rust_import --target aarch64-linux-android --profile $Profile
     if ($LASTEXITCODE -ne 0) { throw "Android Rust $operation failed." }
     if (!$Check) {
         $metadata = & cargo metadata --locked --no-deps --format-version 1
@@ -31,16 +31,16 @@ try {
         $profileDir = if ($Profile -eq 'dev') { 'debug' } else { 'release' }
         $jniDir = Join-Path $PSScriptRoot 'app/src/main/jniLibs/arm64-v8a'
         New-Item -ItemType Directory -Force -Path $jniDir | Out-Null
-        $library = Join-Path $jniDir 'libskate3rust_android.so'
-        Copy-Item -LiteralPath (Join-Path $targetRoot "aarch64-linux-android/$profileDir/libskate3rust_android.so") -Destination $library
-        $elfInfo = & (Join-Path $toolsRoot 'llvm-readelf.exe') -d $library
-        if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect shared library dependencies.' }
-        if ($elfInfo -match '\[libc\+\+_shared\.so\]') {
-            Copy-Item -LiteralPath (Join-Path (Split-Path $toolsRoot -Parent) 'sysroot/usr/lib/aarch64-linux-android/libc++_shared.so') -Destination $jniDir
-        } elseif (Test-Path -LiteralPath (Join-Path $jniDir 'libc++_shared.so')) {
-            Remove-Item -LiteralPath (Join-Path $jniDir 'libc++_shared.so')
+        foreach ($name in @('skate3rust_android', 'skate3rust_import')) {
+            $library = Join-Path $jniDir "lib$name.so"
+            Copy-Item -LiteralPath (Join-Path $targetRoot "aarch64-linux-android/$profileDir/lib$name.so") -Destination $library
+            $elfInfo = & (Join-Path $toolsRoot 'llvm-readelf.exe') -d $library
+            if ($LASTEXITCODE -ne 0) { throw "Cannot inspect $name shared library dependencies." }
+            if ($elfInfo -match '\[libc\+\+_shared\.so\]') {
+                Copy-Item -LiteralPath (Join-Path (Split-Path $toolsRoot -Parent) 'sysroot/usr/lib/aarch64-linux-android/libc++_shared.so') -Destination $jniDir
+            }
+            & (Join-Path $toolsRoot 'llvm-strip.exe') --strip-debug $library
+            if ($LASTEXITCODE -ne 0) { throw "Cannot strip $name debug symbols." }
         }
-        & (Join-Path $toolsRoot 'llvm-strip.exe') --strip-debug $library
-        if ($LASTEXITCODE -ne 0) { throw 'Cannot strip packaged debug symbols.' }
     }
 } finally { Pop-Location }

@@ -46,6 +46,7 @@ public final class ImportService extends Service {
                 if(getFilesDir().getUsableSpace()<64L*1024*1024)throw new java.io.UncheckedIOException(new IOException("Not enough free app storage to safely finish this import."));
                 state.report(phase,completed,total,item);persist(null,null);updateNotification();
             },this::checkCancelled);
+            NativeAssetValidator.nativeValidate(stage.getAbsolutePath());
             checkCancelled();state.report(ImportModel.Phase.VALIDATING,manifest.totalBytes,manifest.totalBytes,"Checking installed game files");persist(null,null);updateNotification();
             store.publish(stage,(phase,completed,total,item)->{state.report(phase,completed,total,item);persist(null,null);updateNotification();},this::checkCancelled);
             state.finish(ImportModel.Phase.COMPLETE,"Assets installed. You can play now.");persist(null,null);

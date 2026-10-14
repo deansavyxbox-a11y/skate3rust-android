@@ -4779,6 +4779,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "skate-import"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "skate-data",
+]
+
+[[package]]
 name = "skate-mods"
 version = "0.1.0"
 dependencies = [
@@ -4817,6 +4826,15 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "skate-game",
+]
+
+[[package]]
+name = "skate3rust_import"
+version = "0.1.0"
+dependencies = [
+ "jni 0.21.1",
+ "serde_json",
+ "skate-import",
 ]
 
 [[package]]
