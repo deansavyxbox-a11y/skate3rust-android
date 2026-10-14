@@ -3,6 +3,7 @@ use std::{fs, path::{Path, PathBuf}};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ValidationReport { pub maps: Vec<String>, pub files: usize }
+pub mod xdvdfs;
 
 pub fn validate_installation(root: &Path) -> Result<ValidationReport, String> {
     let root = root.canonicalize().map_err(|e| format!("Cannot open installation: {e}"))?;
