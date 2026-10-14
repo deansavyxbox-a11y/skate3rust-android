@@ -4,6 +4,10 @@
 use std::{io::Read, path::Path, time::Instant};
 mod texture_decode;
 mod storage_v15;
+mod merge;
+#[cfg(test)]
+#[path = "skate_map/merge_tests.rs"]
+mod merge_tests;
 
 #[derive(Debug, PartialEq)]
 pub struct SkateMap {

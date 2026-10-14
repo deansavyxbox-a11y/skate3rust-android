@@ -104,7 +104,10 @@ impl Config {
                 config.map_path = Some(path.canonicalize().map_err(|e| e.to_string())?);
             }
         }
-        config.map_fingerprint = map_fingerprint(config.map_path.as_deref())?;
+        if let (Some(path),Some(map))=(config.map_path.as_deref(),config.map.take()) {
+            let (map,fp)=crate::map_library::attach_map(&config.asset_root,path,map)?;
+            config.map=Some(map);config.map_fingerprint=fp;
+        } else {config.map_fingerprint=map_fingerprint(config.map_path.as_deref())?;}
         if config.multiplayer.direct.is_some() && config.multiplayer.session==0 {return Err("Direct multiplayer requires --net-session (a nonzero number shared by both players)".into());}
         if let Some(id) = &config.teleport {
             let destinations = crate::teleport_menu::load(&config.asset_root)?;

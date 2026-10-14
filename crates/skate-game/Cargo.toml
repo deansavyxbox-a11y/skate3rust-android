@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 publish.workspace = true
 
+[lib]
+path = "src/lib.rs"
+
 [[bin]]
 name = "skate3rust"
 path = "src/main.rs"
@@ -35,6 +38,12 @@ image = { version = "=0.25.10", default-features = false, features = ["png", "jp
 skate-mods = { path = "../skate-mods" }
 skate-dynamics = { path = "../skate-dynamics" }
 gltf = { version = "=1.4.1", default-features = true }
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+bevy = { workspace = true, default-features = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+bevy = { workspace = true, features = ["std", "async_executor", "multi_threaded", "android-native-activity", "default_app", "3d_bevy_render", "2d_bevy_render", "ui_bevy_render", "bevy_scene", "bevy_animation", "bevy_winit", "bevy_picking", "default_font", "png", "vorbis"] }
 
 [dev-dependencies]
 naga = { version = "=27.0.3", features = ["wgsl-in"] }

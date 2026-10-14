@@ -30,7 +30,7 @@ struct HudMaterial {
 }
 impl Material2d for HudMaterial {
     fn fragment_shader() -> ShaderRef {
-        "embedded://skate3rust/hud_render.wgsl".into()
+        bevy::asset::AssetPath::from(bevy::asset::embedded_path!("hud_render.wgsl")).with_source("embedded").into()
     }
     fn alpha_mode(&self) -> AlphaMode2d {
         AlphaMode2d::Blend
@@ -46,7 +46,7 @@ struct HudComposite {
 }
 impl UiMaterial for HudComposite {
     fn fragment_shader() -> ShaderRef {
-        "embedded://skate3rust/hud_composite.wgsl".into()
+        bevy::asset::AssetPath::from(bevy::asset::embedded_path!("hud_composite.wgsl")).with_source("embedded").into()
     }
     fn specialize(descriptor: &mut RenderPipelineDescriptor, _: UiMaterialKey<Self>) {
         if let Some(fragment) = &mut descriptor.fragment {

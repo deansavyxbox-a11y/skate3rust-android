@@ -58,10 +58,16 @@ pub(crate) fn build(
 ) -> App {
     let retail_scene = config.map.as_ref().is_some_and(|map| crate::retail_render::RetailScene::for_map(map));
     let mut app = App::new();
+    #[cfg(target_os = "android")]
+    {
+        let root = config.asset_root.clone();
+        app.register_asset_source(bevy::asset::io::AssetSourceId::Default,
+            bevy::asset::io::AssetSourceBuilder::new(move ||
+                Box::new(bevy::asset::io::file::FileAssetReader::new(root.clone()))));
+    }
     crate::custom_models::register_source(&mut app);
     crate::modding::register_source(&mut app);
-    app.add_plugins(
-        DefaultPlugins
+    let plugins = DefaultPlugins
             .set(AssetPlugin {
                 file_path: config.asset_root.to_string_lossy().into_owned(),
                 ..default()
@@ -69,6 +75,8 @@ pub(crate) fn build(
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: config.multiplayer.title.clone().unwrap_or_else(||"Skate 3 Rust Engine".into()),
+                    #[cfg(target_os = "android")]
+                    mode: bevy::window::WindowMode::BorderlessFullscreen(bevy::window::MonitorSelection::Primary),
                     resolution: (1280, 800).into(),
                     ..default()
                 }),
@@ -84,12 +92,13 @@ pub(crate) fn build(
                     ..default()
                 }),
                 ..default()
-            }).build().disable::<bevy::log::LogPlugin>()
+            }).build().disable::<bevy::log::LogPlugin>();
             // Gameplay and menu navigation both use raw XInput. No game system
             // consumes Bevy gamepad events/rumble; its second device backend can
             // stall PreUpdate (70.68 ms in the University capture).
-            .disable::<bevy::gilrs::GilrsPlugin>(),
-    )
+    #[cfg(not(target_os = "android"))]
+    let plugins = plugins.disable::<bevy::gilrs::GilrsPlugin>();
+    app.add_plugins(plugins)
     .insert_resource(bevy::winit::WinitSettings {focused_mode:bevy::winit::UpdateMode::Continuous,unfocused_mode:bevy::winit::UpdateMode::Continuous})
     .insert_resource(config)
     .insert_resource(crate::retail_render::RetailScene(retail_scene))

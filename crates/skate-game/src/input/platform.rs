@@ -137,7 +137,17 @@ pub(crate) fn poll_cached(
     assert!(index < 4);
     #[cfg(windows)]
     return windows::poll(index as u32, cache);
-    #[cfg(not(windows))]
+    #[cfg(target_os = "android")]
+    {
+        let _ = cache;
+        let state = super::android::sample();
+        return if index == 0 && state.connected {
+            Ok(DevicePacket { number: state.number, subtype: 1, state: XboxState {
+                buttons: state.buttons, triggers: state.triggers, left: state.left, right: state.right,
+            }})
+        } else { Err(DeviceError::Disconnected) };
+    }
+    #[cfg(not(any(windows, target_os = "android")))]
     Err(DeviceError::UnsupportedPlatform)
 }
 

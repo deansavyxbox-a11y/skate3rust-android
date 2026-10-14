@@ -83,3 +83,9 @@ __pycache__/
 /PLAY-NATIVE-TRAINER.bat
 /PLAY-SCROLL-SETTINGS.bat
 /PLAY-SHOWCASE.bat
+
+/android/local.properties
+/android/.gradle/
+/android/app/build/
+/android/build/
+/android/app/src/main/jniLibs/

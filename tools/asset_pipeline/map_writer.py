@@ -128,7 +128,8 @@ def write(manifest_path,output,collision,report=lambda _:None, *, render_only=Fa
                     if not name:return 0
                     if name not in ids:raise ValueError('Missing retail map texture '+name)
                     return ids[name]
-                string(mats,f"{model['asset_id']}_{i}");u(mats,1);floats(mats,.82,0.,*( (0.,0.,0.) if albedo=='0x0000119903e3870a' else (.8,.8,.8)),.68,0.)
+                color = mesh.get('color', (.8,.8,.8))
+                string(mats,f"{model['asset_id']}_{i}");u(mats,1);floats(mats,.82,0.,*( (0.,0.,0.) if albedo=='0x0000119903e3870a' else color),.68,0.)
                 u(mats,tex(albedo),tex(light));floats(mats,.25 if light else 0.);u(mats,tex(normal),0,0,mesh.get('alpha_mode',0));floats(mats,mesh.get('alpha_cutoff',.5))
                 # The established exporter derives layers from the authored
                 # alpha mode for the generated MAT_<texture-id> names.

@@ -39,6 +39,9 @@ pub(super) fn cleanup(mut exit: MessageReader<AppExit>) {
 }
 pub(crate) fn cache_directory() -> &'static Path {
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
+    #[cfg(target_os = "android")]
+    return ROOT.get_or_init(|| bevy::android::ANDROID_APP.get().unwrap().internal_data_path().unwrap().join("online-cache"));
+    #[cfg(not(target_os = "android"))]
     ROOT.get_or_init(|| std::env::temp_dir().join(format!("skate-online-{:016x}", super::unique())))
 }
 pub(super) fn sync(

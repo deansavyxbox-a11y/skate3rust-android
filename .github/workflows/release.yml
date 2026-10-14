@@ -1,9 +1,5 @@
 name: Windows release
 on:
-  push:
-    branches: ['**']
-  release:
-    types: [published]
   workflow_dispatch:
 permissions:
   contents: read

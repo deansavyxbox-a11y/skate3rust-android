@@ -1,0 +1,20 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.skate3rust.android'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.skate3rust.android'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0-experimental'
+        ndk { abiFilters 'arm64-v8a' }
+    }
+    buildTypes { debug { debuggable true; jniDebuggable true } }
+    packaging { jniLibs { useLegacyPackaging true } }
+}
+tasks.register('buildRust', Exec) {
+    workingDir rootProject.projectDir
+    commandLine 'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'build-rust.ps1', '-Profile', providers.gradleProperty('skateRustProfile').getOrElse('release')
+}
+tasks.named('preBuild').configure { dependsOn 'buildRust' }

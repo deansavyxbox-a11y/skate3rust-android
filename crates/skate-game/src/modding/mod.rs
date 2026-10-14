@@ -1,5 +1,7 @@
 //! Main-thread SDK adapter. Lua never receives World, entity IDs, or asset handles.
 mod audio;
+#[cfg(target_os = "android")]
+pub(crate) use audio::ModAudioVoice;
 mod canvas;
 mod graphics_dynamic;
 mod vehicle_camera;
@@ -247,6 +249,8 @@ pub(crate) fn register_source(app: &mut App) {
 }
 
 pub(crate) fn package_root() -> std::path::PathBuf {
+    #[cfg(target_os = "android")]
+    if let Some(root) = bevy::android::ANDROID_APP.get().and_then(|app| app.internal_data_path()) { return root.join("mods"); }
     std::env::var_os("SKATE3_MODS")
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| {

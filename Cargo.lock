@@ -4812,6 +4812,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "skate3rust_android"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "skate-game",
+]
+
+[[package]]
 name = "skrifa"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

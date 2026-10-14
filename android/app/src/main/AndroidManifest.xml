@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.hardware.vulkan.level" android:version="0" android:required="true" />
+    <application android:label="Skate 3 Rust" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:allowBackup="false" android:extractNativeLibs="true">
+        <activity android:name=".LaunchActivity" android:exported="true" android:screenOrientation="sensorLandscape" android:theme="@style/Theme.SkateLaunch">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".TouchLayoutActivity" android:exported="false" android:screenOrientation="sensorLandscape" android:theme="@style/Theme.SkateBase" />
+        <activity android:name=".GameActivity" android:exported="true" android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|uiMode"
+            android:theme="@style/Theme.SkateLaunch">
+            <meta-data android:name="android.app.lib_name" android:value="skate3rust_android" />
+        </activity>
+    </application>
+</manifest>

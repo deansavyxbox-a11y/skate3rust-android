@@ -46,6 +46,8 @@ fn update(
     time: Res<Time<Real>>,
     mut sample: Local<FrameSample>,
     mut labels: Query<&mut Text, With<FpsText>>,
+    #[cfg(target_os = "android")] players: Query<&Transform,With<crate::world::PlayerRoot>>,
+    #[cfg(target_os = "android")] physics: Option<Res<crate::physics::GamePhysics>>,
 ) {
     let seconds = time.delta_secs_f64();
     if seconds <= 0.0 {
@@ -57,6 +59,10 @@ fn update(
     sample.seconds += seconds;
     if sample.seconds >= 0.5 {
         let fps = f64::from(sample.frames) / sample.seconds;
+        #[cfg(target_os = "android")]
+        info!("SKATE_FPS_SAMPLE frames={} seconds={:.9} fps={fps:.3} player={:?} contacts={:?} ticks={:?} simulation_failed={:?}",
+            sample.frames,sample.seconds,players.single().ok().map(|t|t.translation),
+            physics.as_ref().map(|p|p.contact_count),physics.as_ref().map(|p|p.ticks),physics.as_ref().map(|p|p.failed));
         // Opt-in measurement of the existing display counter: no extra render
         // systems, GPU queries or schedule barriers in ordinary gameplay.
         if std::env::var_os("SKATE_FPS_LOG").is_some() {

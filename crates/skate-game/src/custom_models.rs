@@ -137,6 +137,10 @@ impl CustomModels {
     }
 }
 pub(crate) fn library_path() -> PathBuf {
+    #[cfg(target_os = "android")]
+    if let Some(root) = bevy::android::ANDROID_APP.get().and_then(|app| app.internal_data_path()) {
+        return root.join("custom-characters");
+    }
     std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(std::env::temp_dir)

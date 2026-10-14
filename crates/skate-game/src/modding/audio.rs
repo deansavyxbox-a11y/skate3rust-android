@@ -39,6 +39,8 @@ struct ModAudio {
 }
 #[derive(Component)]
 struct ModAudioListener;
+#[derive(Component)]
+pub(crate) struct ModAudioVoice;
 
 pub(super) fn install(app: &mut App) {
     app.init_resource::<ModAudio>();
@@ -113,6 +115,8 @@ pub(super) fn play(world: &mut World, mods: &Mods, owner: &str, key: String, opt
         remove_voice(world, &mut audio, &slot);
         let paused = opts.paused || mods.manager.snapshot["paused"].as_bool().unwrap_or(true)
             || mods.manager.snapshot["replay"].as_bool().unwrap_or(false);
+        #[cfg(target_os = "android")]
+        let paused = paused || !crate::android_runtime::is_active();
         let initial_gain = if opts.fade_in > 0.0 { 0.0 } else { opts.volume };
         let settings = PlaybackSettings {
             mode: if opts.looping { PlaybackMode::Loop } else { PlaybackMode::Once },
@@ -120,7 +124,7 @@ pub(super) fn play(world: &mut World, mods: &Mods, owner: &str, key: String, opt
             spatial: opts.spatial, spatial_scale: Some(SpatialScale::new(opts.spatial_scale)),
             ..Default::default()
         };
-        let entity = world.spawn((AudioPlayer::new(handle), settings, Transform::from_translation(position))).id();
+        let entity = world.spawn((ModAudioVoice, AudioPlayer::new(handle), settings, Transform::from_translation(position))).id();
         audio.voices.insert(slot, Voice {
             entity, body: opts.body, position: origin, offset, looping: opts.looping,
             paused: opts.paused, volume: opts.volume, gain: initial_gain,
@@ -222,6 +226,8 @@ fn sync(world: &mut World) {
         camera.is_none() || mods.manager.snapshot["paused"].as_bool().unwrap_or(true)
             || mods.manager.snapshot["replay"].as_bool().unwrap_or(false)
     };
+    #[cfg(target_os = "android")]
+    let paused = paused || !crate::android_runtime::is_active();
     world.resource_scope(|world, mut audio: Mut<ModAudio>| {
         let mut remove = Vec::new();
         for (key, v) in &mut audio.voices {

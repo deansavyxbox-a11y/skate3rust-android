@@ -1,0 +1,12 @@
+[package]
+name = "skate3rust_android"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[target.'cfg(target_os = "android")'.dependencies]
+skate-game = { path = "../../crates/skate-game", default-features = false }
+bevy = { version = "=0.18.1", default-features = false, features = ["std", "async_executor", "multi_threaded", "android-native-activity", "bevy_asset", "bevy_color", "bevy_log", "bevy_window", "bevy_winit", "bevy_render", "bevy_core_pipeline", "bevy_pbr", "bevy_mesh", "bevy_camera", "bevy_light", "png"] }

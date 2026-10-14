@@ -8,6 +8,8 @@ mod gesture_mapping_data;
 pub(crate) mod gesture_mapping;
 pub(crate) mod gesture_input;
 pub(crate) mod platform;
+#[cfg(target_os = "android")]
+pub(crate) mod android;
 pub(crate) use controllers::{ControllerInput, ControllerStatus, RawInput};
 use skate_core::input::tick::TickInput;
 

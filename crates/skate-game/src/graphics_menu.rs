@@ -47,8 +47,8 @@ impl Default for GraphicsSettings {
         Self {
             width: 1280,
             height: 800,
-            scale: 100,
-            fps: 0,
+            scale: if cfg!(target_os = "android") { 50 } else { 100 },
+            fps: if cfg!(target_os = "android") { 30 } else { 0 },
             hour: 12.,
             day_speed: 60,
             ambient_level: None,
@@ -153,7 +153,7 @@ impl Menu {
             0 => (1000..1000 + self.maps.len()).collect(),
             1 if self.difficulty == Difficulty::Custom => std::iter::once(3).chain(300..337).chain([8,10]).collect(),
             1 => vec![3, 8, 10],
-            2 => vec![0, 1, 2, 13],
+            2 => if cfg!(target_os="android") {vec![0,1,2,13,15]} else {vec![0,1,2,13]},
             4 => vec![7, 11, 14],
             i if i >= SECTIONS.len() => self.custom_sections.get(i-SECTIONS.len()).map_or(Vec::new(), |(_,entries)| (200..200+entries.len()).collect()),
             _ => Vec::new(),
@@ -229,10 +229,11 @@ fn setup(
         Err(_) => GraphicsSettings::default(),
     }
     .validated();
+    #[cfg(not(target_os = "android"))]
     window
         .resolution
         .set_physical_resolution(settings.width, settings.height);
-    window.present_mode = PresentMode::AutoNoVsync;
+    window.present_mode = if cfg!(target_os = "android") { PresentMode::AutoVsync } else { PresentMode::AutoNoVsync };
     let size = settings.internal_size(window.physical_size());
     let mut image = Image::new_target_texture(size.x, size.y, TextureFormat::Rgba8UnormSrgb, None);
     image.sampler = ImageSampler::linear();
@@ -587,6 +588,8 @@ pub(crate) fn interact(
                 },
                 13 => { menu.daylight = true; menu.selected = 0; menu.status = "Custom maps: change time, cycle speed and ambient light. Retail lighting stays authored.".into(); },
                 14 => mods.begin(),
+                #[cfg(target_os="android")]
+                15 if menu.section==2 => crate::android_ui::STATE.request_layout(),
                 _ => {}
             }
         }
@@ -605,7 +608,11 @@ pub(crate) fn interact(
             };
         }
     }
-    if menu.open && !net.active() {
+    #[cfg(target_os = "android")]
+    let platform_active = crate::android_runtime::is_active();
+    #[cfg(not(target_os = "android"))]
+    let platform_active = true;
+    if (menu.open && !net.active()) || !platform_active {
         time.pause();
     } else {
         time.unpause();
@@ -814,6 +821,8 @@ fn labels(
                 12 => "Teleport".into(),
                 13 => "Day & night".into(),
                 14 => "Mods".into(),
+                #[cfg(target_os="android")]
+                15 => "Touch controls".into(),
                 _ => "Multiplayer".into(),
             }
         };

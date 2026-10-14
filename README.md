@@ -1,54 +1,33 @@
-<p align="center">
-  <img src="docs/images/skating-crab.png" alt="Rust crab riding a skateboard" width="480">
-</p>
+# Skate3Rust Android
 
-# Skate 3 Rust Engine
+Experimental native ARM64 Android port of [SK8-ENGINE/skate-3-rust-engine](https://github.com/SK8-ENGINE/skate-3-rust-engine), built with Rust and Bevy. Based on upstream build 29 (`60efdef86600d8d8d4feb4b7c608fa0efd0643d7`).
 
-A Rust and Bevy skating project built from Skate 3 reverse-engineering research.
-Includes skating, tricks, grinds, offboard movement, difficulty settings and
-`.skate` map support. Gameplay parity is still a work in progress.
+[Download the Android APK](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.1.0-experimental) · [Setup and build guide](docs/ANDROID_PORT.md) · [Contributing](CONTRIBUTING.md)
 
-## Play
+## What works
 
-[Download Experimental](https://github.com/SK8-ENGINE/skate-3-rust-engine/releases/tag/experimental).
-Successful `main` builds replace this prerelease. Choose **Latest** in Updates
-for experimental updates; **Stable** is the default.
+- Native Android rendering and skating, map selection, collision and rails.
+- Ten converted disc maps, with supplemental full layouts for four skate parks.
+- USB controller support and multitouch sticks/buttons, with automatic controller detection.
+- Movable touch controls: Menu → Graphics → Touch controls. Drag controls, then Save. Cancel discards edits; Reset previews defaults until saved.
+- Android launcher icon and branded loading screen with native loading status.
 
-Extract the Windows release ZIP and run `skate3rust.exe`. Select your Skate 3
-Xbox 360 ISO, or select `default.xex` in an extracted game folder. Keep its
-`data` folder alongside it. Setup prepares the skater, animations and all disc maps, then
-starts University. The original scoring and session-marker HUD assets are also
-exported automatically during setup. No Blender, Python or Rust installation is needed.
-ISO extraction needs internet access. The first conversion can take a while.
+Tested on a RedMagic 10 Pro (Android 16, Adreno 830). Other devices are unverified. Requires ARM64, Android 8 or newer and compatible Vulkan support; this is not a compatibility guarantee.
 
-Use an XInput controller to play. Escape opens graphics, difficulty and map
-settings. Maps can be switched without restarting the game.
+## Before downloading
 
-**Skate 3 assets are not included.** Your converted files stay in
-the `data` folder beside your executable. Each freshly unpacked copy runs its
-own setup; it does not adopt another installation. In-place updates refresh
-only changed asset groups.
+**The APK does not include Skate 3 game assets.** You need your own Xbox 360 game copy, a Windows PC to prepare the assets, and ADB to install them. There is currently no on-phone asset importer. Installing only the APK does not provide the original maps or characters.
 
-## Build
+Follow the [setup guide](docs/ANDROID_PORT.md). Do not upload ISOs, extracted game files, converted maps, textures or other proprietary assets to this repository or its issues.
 
-Requires Windows, Rust with the MSVC toolchain, and LLVM installed in its default
-location. Run `BUILD.bat` to build, then `PLAY.bat` to launch the test world.
-`PLAY.bat` opens your saved map (University by default); use the in-game menu to switch maps, or drag a `.skate` file onto `PLAY.bat`. An XInput controller is required for gameplay;
-Escape opens difficulty and graphics settings.
+This is an experimental, debuggable APK because the current asset installer uses Android `run-as`. It uses a development signing certificate. Contributor builds may have different certificates and cannot necessarily update an existing install. Uninstalling clears app-private game assets, settings and touch layouts; back up your data first.
 
-Development builds use a prepared asset set in `assets/private/` or the
-installed asset directory. `scripts/Build-Release.ps1` builds the portable Windows
-package and requires Python 3.13. GitHub Actions builds `main` automatically;
-numbered releases are published separately.
+## Known limitations
 
-Custom animations and climbing support remain available, but no custom clips
-are shipped. The included format-demo map is original procedural content.
+Gameplay parity remains in progress. Some park decals/materials are incomplete; dynamic park objects use static initial placements. Audio parity, wardrobe expansion, multiplayer, broad device compatibility and sustained thermal performance are not established for Android. There is no automatic Android updater. See the guide for validation scope.
 
-Implementation notes are in [`docs/`](docs/). Patched Bevy dependencies and
-their licenses are in [`vendor/`](vendor/). This is an unofficial project,
-not affiliated with EA.
+## Source and attribution
 
-## Advanced diagnostics
+Original engine and reverse-engineering work: [SK8-ENGINE and upstream contributors](https://github.com/SK8-ENGINE/skate-3-rust-engine). See [the original README](README-UPSTREAM.md), [GPL-3.0 license](LICENSE), and notices retained in dependency/vendor folders. The root license is preserved from upstream's current main branch; third-party notices continue to apply. Android port work is published in this fork with its source.
 
-Windows builds support opt-in [performance timeline capture](docs/performance-tracing.md)
-through the `--trace` CLI option, including optional GPU pass diagnostics.
+This is an unofficial fan project, not affiliated with or endorsed by EA, Black Box, Full Circle or the Skate franchise. Game names and trademarks belong to their respective owners. No proprietary game content is included in the Android release.

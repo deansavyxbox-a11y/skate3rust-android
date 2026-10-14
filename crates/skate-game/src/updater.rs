@@ -9,6 +9,12 @@ pub(crate) struct Updater {
     temporary: Option<PathBuf>,
 }
 
+#[cfg(target_os = "android")]
+fn helper_command(_: bool, _: bool) -> Result<(Command, PathBuf, PathBuf), String> {
+    Err("Install Android updates through the APK".into())
+}
+
+#[cfg(not(target_os = "android"))]
 fn helper_command(recover: bool, automatic: bool) -> Result<(Command, PathBuf, PathBuf), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let root = exe.parent().ok_or("Missing program directory")?;
@@ -69,9 +75,9 @@ impl Updater {
 pub(crate) struct UpdaterPlugin;
 impl Plugin for UpdaterPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Updater>()
-            .add_systems(Startup, |mut updater: ResMut<Updater>| { updater.open(true); })
-            .add_systems(Update, poll);
+        app.init_resource::<Updater>().add_systems(Update, poll);
+        #[cfg(not(target_os = "android"))]
+        app.add_systems(Startup, |mut updater: ResMut<Updater>| { updater.open(true); });
     }
 }
 fn poll(mut updater: ResMut<Updater>, mut exit: MessageWriter<AppExit>) {
