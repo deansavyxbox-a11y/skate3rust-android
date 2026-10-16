@@ -66,9 +66,9 @@ Direct ISO import is experimental and needs substantial free internal storage. T
 
 Gameplay parity remains in progress. Some park decals/materials are incomplete; dynamic park objects use static initial placements. Audio parity, wardrobe expansion, multiplayer, broad device compatibility and sustained thermal performance are not established for Android. There is no automatic Android updater. See the guide for validation scope.
 
-The unpublished candidate is not cleared for 16 KB page-size devices: its embedded FreeType library has 4 KB alignment. A close/clipped camera view at the saved DownTownSkatePark spawn also needs follow-up. See the [candidate validation report and remaining release gates](android/RELEASE_CANDIDATE_0.2.0_RC1.md).
+The unpublished candidate is not cleared for 16 KB page-size devices: its embedded FreeType library has 4 KB alignment. See the [initial candidate validation report and remaining release gates](android/RELEASE_CANDIDATE_0.2.0_RC1.md).
 
-The subsequent unpublished [0.2.0-rc2 candidate](android/RELEASE_NOTES_0.2.0_RC2.md) adjusts that park's default start above the raised platform. Its [spawn validation report](android/DOWNTOWN_SPAWN_VALIDATION.md) distinguishes completed build/install checks from pending on-phone visual checks.
+The subsequent unpublished [0.2.0-rc2 candidate](android/RELEASE_NOTES_0.2.0_RC2.md) adjusts DownTownSkatePark's default start above the raised platform. The user confirmed the repaired spawn looks good on RedMagic 10 Pro; see the [spawn validation report](android/DOWNTOWN_SPAWN_VALIDATION.md) for scope and remaining checks.
 
 ## Source and attribution
 
