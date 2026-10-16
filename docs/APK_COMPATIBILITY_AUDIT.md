@@ -109,6 +109,10 @@ adb install -r skate3rust-android-0.2.0-rc2-arm64.apk
 
 The last command should use the actual downloaded APK filename. Redact device serials and private data before posting. If `arm64-v8a` is absent, `INSTALL_FAILED_NO_MATCHING_ABIS` is expected for the current release. If ARM64 is present, retain the actual install failure code and investigate signing, version, policy, storage or package parsing accordingly. A successful install followed by graphics failure is a separate Vulkan/runtime issue. Do not change SDK, Vulkan or signing requirements based solely on these model names.
 
+## Current prerelease second-device follow-up — 2026-10-16
+
+The exact published **`0.2.0-rc2`** APK, SHA-256 `54d3f9c5ca15ff6a03887eefe8adc7f287b402e9818208815b59f8df54bf7961`, was freshly installed on a Retroid Pocket 3 Plus (Android 11, ARM64) with ADB `Success`. Prepared ZIP import also completed. A same-version reinstall returned `Success` and preserved the map setting and installation marker. University reached renderer readiness but Android's low-memory killer terminated the game before visible gameplay; StartPark subsequently rendered and stayed open, with one screenshot showing 9 FPS. This is a confirmed map-dependent runtime memory limitation on that device, **not** a reproduced APK installation failure. No new failure code was obtained from either viewer. See [Retroid validation](../android/RETROID_POCKET_3_PLUS_VALIDATION.md) for test scope and evidence.
+
 ## Pending device procedure
 
 1. Connect and authorize ADB; record `adb devices -l`, model, SDK, `ro.product.cpu.abilist`, `getconf PAGE_SIZE`, available internal storage and Vulkan feature declarations. Redact serial numbers from public reports.

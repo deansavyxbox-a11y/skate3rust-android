@@ -11,9 +11,9 @@ Experimental native ARM64 Android port of [SK8-ENGINE/skate-3-rust-engine](https
 - USB controller support and multitouch sticks/buttons, with automatic controller detection.
 - Movable touch controls: Menu → Graphics → Touch controls. Drag controls, then Save. Cancel discards edits; Reset previews defaults until saved.
 - Android launcher icon and branded loading screen with native loading status.
-- On-phone prepared ZIP import and direct conversion of your own Xbox 360 ISO in `0.2.0-rc2`. Both paths completed on RedMagic 10 Pro; other phones and ISO variants are unverified.
+- On-phone prepared ZIP import and direct conversion of your own Xbox 360 ISO in `0.2.0-rc2`. Both paths completed on RedMagic 10 Pro. Prepared ZIP import also completed on Retroid Pocket 3 Plus; direct ISO conversion there has not been tested.
 
-Tested on a RedMagic 10 Pro (Android 16, Adreno 830). Other devices are unverified. Requires ARM64, Android 8 or newer and compatible Vulkan support; this is not a compatibility guarantee.
+Gameplay was tested on RedMagic 10 Pro (Android 16, Adreno 830). On Retroid Pocket 3 Plus (Android 11), the exact public APK installed and StartPark rendered, but loading University triggered Android's low-memory killer. StartPark showed 9 FPS in one screenshot; sustained performance and controls were not tested on that device. Other devices remain unverified. Requires ARM64, Android 8 or newer and compatible Vulkan support; this is not a compatibility guarantee.
 
 ## Before downloading
 
@@ -53,6 +53,7 @@ That message alone does not identify the cause. Use the ADB command above and in
 | `INSTALL_PARSE_FAILED_*`, invalid APK, or a different checksum | Download the official APK again and verify its checksum; preserve the exact error if it persists. |
 | `INSTALL_FAILED_USER_RESTRICTED` or device-policy warning | Check the device's sideloading/USB installation permissions or contact its administrator. |
 | ADB says `Success`, but launch fails or maps are missing | Installation succeeded. Report launch logs and asset-setup status separately; GPU/driver support and missing assets require different investigation. |
+| ADB says `Success`, but the game closes while loading a large map | Check `adb logcat` for `lowmemorykiller` and report device RAM and map name. On the Retroid Pocket 3 Plus, University was killed under memory pressure while StartPark rendered. This is a runtime limitation, not an APK installation error. |
 
 These are troubleshooting possibilities, **not confirmed explanations for the reported viewer failure**. The [published APK audit](docs/APK_COMPATIBILITY_AUDIT.md) records the exact artifact checks, certificate fingerprint and current testing gaps. Debug signing alone does not establish that a fresh install must fail.
 
@@ -65,6 +66,8 @@ Direct ISO import is experimental and needs substantial free internal storage. T
 ## Known limitations
 
 Gameplay parity remains in progress. Some park decals/materials are incomplete; dynamic park objects use static initial placements. Audio parity, wardrobe expansion, multiplayer, broad device compatibility and sustained thermal performance are not established for Android. There is no automatic Android updater. See the guide for validation scope.
+
+See the [Retroid Pocket 3 Plus validation](android/RETROID_POCKET_3_PLUS_VALIDATION.md) for the second-device installation, import and map-loading results.
 
 This prerelease is not cleared for 16 KB page-size devices: its embedded FreeType library has 4 KB alignment. See the [initial candidate validation report and remaining release gates](android/RELEASE_CANDIDATE_0.2.0_RC1.md).
 
