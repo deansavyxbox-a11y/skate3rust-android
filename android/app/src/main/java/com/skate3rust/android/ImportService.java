@@ -16,7 +16,7 @@ public final class ImportService extends Service {
     static final String ACTION_IMPORT="com.skate3rust.android.IMPORT",ACTION_CANCEL="com.skate3rust.android.CANCEL_IMPORT";
     static final String EXTRA_URI="source_uri",EXTRA_KIND="source_kind",KIND_ZIP="zip",KIND_ISO="iso";
     static final String PREFS="asset_import_job";
-    private static final String CHANNEL="asset_import",PREF_ID="id",PREF_PHASE="phase",PREF_COMPLETED="completed",PREF_TOTAL="total",PREF_ITEM="item",PREF_MESSAGE="message",PREF_URI="uri",PREF_KIND="kind",PREF_ABANDONED_ID="abandoned_id";
+    private static final String CHANNEL="asset_import",PREF_ID="id",PREF_PHASE="phase",PREF_COMPLETED="completed",PREF_TOTAL="total",PREF_ITEM="item",PREF_MAP_PROGRESS="map_progress",PREF_MESSAGE="message",PREF_URI="uri",PREF_KIND="kind",PREF_ABANDONED_ID="abandoned_id";
     private static final int NOTIFICATION=6412;
     private static final ExecutorService WORKER=Executors.newSingleThreadExecutor();
     private final AtomicBoolean cancelled=new AtomicBoolean();
@@ -24,6 +24,7 @@ public final class ImportService extends Service {
     private static volatile boolean workerRunning;
     static boolean isImportRunning(){return workerRunning;}
     private ImportJobState state=new ImportJobState();
+    private String mapProgress="";
     private final ImportProgressThrottle progressThrottle=new ImportProgressThrottle();
 
     @Override public void onCreate(){super.onCreate();createChannel();restoreState();}
@@ -35,7 +36,7 @@ public final class ImportService extends Service {
         if(uri==null||(!KIND_ZIP.equals(kind)&&!KIND_ISO.equals(kind))){state.start(UUID.randomUUID().toString(),ImportModel.Phase.INSPECTING);state.finish(ImportModel.Phase.FAILED,"The selected file could not be reopened.");persist(null,null);updateNotification();stopForeground(STOP_FOREGROUND_DETACH);stopSelf(startId);return START_NOT_STICKY;}
         String interruptedId=getSharedPreferences(PREFS,MODE_PRIVATE).getString(PREF_ABANDONED_ID,state.snapshot().id);
         String id=UUID.randomUUID().toString();if(!state.start(id,ImportModel.Phase.INSPECTING)){stopForeground(STOP_FOREGROUND_REMOVE);stopSelf(startId);return START_NOT_STICKY;}
-        workerRunning=true;
+        mapProgress="";workerRunning=true;
         // Retain the abandoned id separately across cancellation/failure and process death.
         getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString(PREF_ABANDONED_ID,interruptedId)
             .putString(PREF_URI,uri.toString()).putString(PREF_KIND,kind).commit();persist(null,null);
@@ -67,7 +68,7 @@ public final class ImportService extends Service {
                 File copiedIso=new File(work,"source.iso");
                 copyIso(source,copiedIso);
                 File disc=new File(work,"disc");if(!disc.mkdirs())throw new IOException("Could not prepare private disc extraction storage.");
-                state.report(ImportModel.Phase.CONVERTING,0,source.size,"Reading the selected Xbox disc");persist(null,null);updateNotification();
+                state.report(ImportModel.Phase.CONVERTING,0,-1,"Reading the selected Xbox disc");persist(null,null);updateNotification();
                 NativeAssetValidator.nativeExtractIso(copiedIso.getAbsolutePath(),disc.getAbsolutePath(),new NativeAssetValidator.Progress(){
                     public boolean isCancelled(){
                         if(getFilesDir().getUsableSpace()<64L*1024*1024){storageInsufficient.set(true);return true;}
@@ -80,7 +81,7 @@ public final class ImportService extends Service {
                 });
                 checkCancelled();
                 IsoAssetConverter.convert(this,disc,target,work,new IsoAssetConverter.Callbacks(){
-                    public void report(String message){state.report(ImportModel.Phase.CONVERTING,0,-1,message);persist(null,null);updateNotification();}
+                    public void report(String message){mapProgress=ImportProgressText.mapContext(mapProgress,message);state.report(ImportModel.Phase.CONVERTING,0,-1,message);persist(null,null);updateNotification();}
                     public void checkCancelled()throws IOException{ImportService.this.checkCancelled();}
                 });
                 checkCancelled();cleanup(work);
@@ -124,7 +125,7 @@ public final class ImportService extends Service {
     private void cleanup(File stage){if(stage==null||!stage.exists())return;try{java.nio.file.Files.walk(stage.toPath()).sorted(java.util.Comparator.reverseOrder()).forEach(path->{try{java.nio.file.Files.deleteIfExists(path);}catch(IOException ignored){}});}catch(IOException ignored){}}
     private void releaseGrant(Uri uri){try{getContentResolver().releasePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(SecurityException|IllegalArgumentException ignored){}}
     private void restoreState(){android.content.SharedPreferences p=getSharedPreferences(PREFS,MODE_PRIVATE);String id=p.getString(PREF_ID,"");if(id.isEmpty())return;ImportModel.Phase phase;try{phase=ImportModel.Phase.valueOf(p.getString(PREF_PHASE,"INTERRUPTED"));}catch(IllegalArgumentException e){phase=ImportModel.Phase.INTERRUPTED;}ImportJobState.Snapshot snap=ImportJobState.restore(id,phase,p.getLong(PREF_COMPLETED,0),p.getLong(PREF_TOTAL,-1),p.getString(PREF_ITEM,""));state.start(snap.id,snap.phase);state.finish(snap.phase,snap.message);if(!ImportJobState.terminal(phase))persist(null,null);}
-    private void persist(String uri,String kind){ImportJobState.Snapshot s=state.snapshot();android.content.SharedPreferences.Editor e=getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString(PREF_ID,s.id).putString(PREF_PHASE,s.phase.name()).putLong(PREF_COMPLETED,s.completed).putLong(PREF_TOTAL,s.total).putString(PREF_ITEM,s.item).putString(PREF_MESSAGE,s.message);if(uri!=null)e.putString(PREF_URI,uri);if(kind!=null)e.putString(PREF_KIND,kind);e.commit();}
+    private void persist(String uri,String kind){ImportJobState.Snapshot s=state.snapshot();android.content.SharedPreferences.Editor e=getSharedPreferences(PREFS,MODE_PRIVATE).edit().putString(PREF_ID,s.id).putString(PREF_PHASE,s.phase.name()).putLong(PREF_COMPLETED,s.completed).putLong(PREF_TOTAL,s.total).putString(PREF_ITEM,s.item).putString(PREF_MAP_PROGRESS,mapProgress).putString(PREF_MESSAGE,s.message);if(uri!=null)e.putString(PREF_URI,uri);if(kind!=null)e.putString(PREF_KIND,kind);e.commit();}
     private void createChannel(){if(Build.VERSION.SDK_INT>=26){NotificationManager manager=getSystemService(NotificationManager.class);manager.createNotificationChannel(new NotificationChannel(CHANNEL,"Asset import",NotificationManager.IMPORTANCE_LOW));}}
     private void startForegroundCompat(Notification notification){if(Build.VERSION.SDK_INT>=29)startForeground(NOTIFICATION,notification,ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);else startForeground(NOTIFICATION,notification);}
     private Notification notification(String text,long completed,long total){ImportJobState.Snapshot s=state.snapshot();Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CHANNEL):new Notification.Builder(this);b.setSmallIcon(android.R.drawable.stat_sys_download).setContentTitle("Skate 3 Rust assets").setContentText(text).setOngoing(s.running()).setOnlyAlertOnce(true);if(total>0)b.setProgress(100,(int)Math.min(100,completed*100/total),false);if(s.running()){Intent cancel=new Intent(this,ImportService.class).setAction(ACTION_CANCEL);b.addAction(android.R.drawable.ic_menu_close_clear_cancel,"Cancel",PendingIntent.getService(this,NOTIFICATION,cancel,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));}return b.build();}

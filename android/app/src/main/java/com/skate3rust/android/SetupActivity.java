@@ -19,7 +19,7 @@ public final class SetupActivity extends Activity {
     private String pendingName;
     private Button importButton,playButton;
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener jobListener=(prefs,key)->{
-        if("phase".equals(key)||"completed".equals(key)||"message".equals(key))refreshJobState();
+        if(ImportProgressText.shouldRefresh(key))refreshJobState();
     };
 
     @Override public void onCreate(Bundle state) {
@@ -106,9 +106,7 @@ public final class SetupActivity extends Activity {
         if(!ImportJobState.terminal(phase)) {
             playButton.setEnabled(false);importButton.setEnabled(false);
             long done=prefs.getLong("completed",0),total=prefs.getLong("total",-1);
-            String amount=String.format(java.util.Locale.ROOT,"%.1f MB",done/1000000.0);
-            if(total>0)amount+=String.format(java.util.Locale.ROOT," / %.1f MB",total/1000000.0);
-            showNotice("Import "+phase.name().toLowerCase().replace('_',' ')+" · "+amount+"\n"+prefs.getString("item","")+"\nKeep the app open while files are checked.");
+            showNotice(ImportProgressText.render(phase,done,total,prefs.getString("item",""),prefs.getString("map_progress","")));
         }
         else if(phase==ImportModel.Phase.FAILED||phase==ImportModel.Phase.CANCELLED){showNotice(prefs.getString("message","Import did not finish."));refreshStatus();importButton.setEnabled(pendingUri!=null&&(pendingType==PICK_ZIP||pendingType==PICK_ISO));}
     }
