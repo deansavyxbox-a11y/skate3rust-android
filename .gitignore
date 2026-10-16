@@ -13,6 +13,7 @@ __pycache__/
 
 # Local investigation notes (icons kept for release packaging).
 /docs/*.md
+!/docs/APK_COMPATIBILITY_AUDIT.md
 
 # Local extraction, animation authoring, archives and credentials.
 *.zip

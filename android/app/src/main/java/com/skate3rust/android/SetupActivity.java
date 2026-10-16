@@ -18,6 +18,9 @@ public final class SetupActivity extends Activity {
     private int pendingType;
     private String pendingName;
     private Button importButton,playButton;
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener jobListener=(prefs,key)->{
+        if("phase".equals(key)||"completed".equals(key)||"message".equals(key))refreshJobState();
+    };
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -55,7 +58,9 @@ public final class SetupActivity extends Activity {
     }
     private void pick(int type) {
         Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
-        intent.putExtra(Intent.EXTRA_MIME_TYPES,type==PICK_ZIP?new String[]{"application/zip","application/x-zip-compressed","application/octet-stream"}:new String[]{"application/octet-stream","application/x-iso9660-image"});
+        // Document providers assign several different MIME types to .iso files.
+        // Leave ISO browsing unrestricted; the service checks the selected extension and disc format.
+        if(type==PICK_ZIP)intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"application/zip","application/x-zip-compressed","application/octet-stream"});
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(intent,type);
     }
     @Override protected void onActivityResult(int requestCode,int resultCode,Intent data) {
@@ -65,8 +70,8 @@ public final class SetupActivity extends Activity {
     }
     private void showSelection() {
         selected.setText("Selected: "+pendingName+"\nOriginal file will remain untouched.");
-        importButton.setEnabled(pendingType==PICK_ZIP);
-        showNotice(pendingType==PICK_ZIP?"Prepared asset ZIP. Game data is copied into private app storage.":"Direct ISO conversion is still being developed. You can import a prepared asset ZIP now.");
+        importButton.setEnabled(pendingType==PICK_ZIP||pendingType==PICK_ISO);
+        showNotice(pendingType==PICK_ZIP?"Prepared asset ZIP. Game data is copied into private app storage.":"The selected Xbox 360 ISO will be copied privately, converted on this phone, then validated before installation.");
     }
     private void startImport() {
         if(pendingUri==null)return;
@@ -83,19 +88,29 @@ public final class SetupActivity extends Activity {
     private void showRecoveryError(IOException error) {
         TextView message=new TextView(this);message.setText("Asset recovery needs attention. Your previous files have been kept.\n\n"+error.getMessage());message.setTextColor(0xffffffff);message.setGravity(Gravity.CENTER);message.setPadding(dp(24),dp(24),dp(24),dp(24));setContentView(message);
     }
-    @Override protected void onResume(){super.onResume();if(store!=null)refreshJobState();}
+    @Override protected void onResume(){super.onResume();getSharedPreferences(ImportService.PREFS,MODE_PRIVATE).registerOnSharedPreferenceChangeListener(jobListener);if(store!=null)refreshJobState();}
+    @Override protected void onPause(){getSharedPreferences(ImportService.PREFS,MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(jobListener);super.onPause();}
     private void refreshJobState(){
+        if(store==null||notice==null)return;
         android.content.SharedPreferences prefs=getSharedPreferences(ImportService.PREFS,MODE_PRIVATE);String value=prefs.getString("phase","");
         if(value.isEmpty())return;
         ImportModel.Phase phase;try{phase=ImportModel.Phase.valueOf(value);}catch(IllegalArgumentException e){return;}
+        phase=ImportJobState.visiblePhase(phase,ImportService.isImportRunning());
         if(phase==ImportModel.Phase.COMPLETE){showNotice("Import complete. Assets are ready to play.");refreshStatus();return;}
         if(phase==ImportModel.Phase.INTERRUPTED){
             String uri=prefs.getString("uri","");String kind=prefs.getString("kind","");
-            if(!uri.isEmpty()&&ImportService.KIND_ZIP.equals(kind)){pendingUri=Uri.parse(uri);pendingType=PICK_ZIP;pendingName=ImportSource.displayName(this,pendingUri);selected.setText("Import stopped before completion. Retry the selected package when ready.");importButton.setText("RETRY PREPARED ZIP IMPORT");importButton.setEnabled(true);}
+            refreshStatus();
+            if(!uri.isEmpty()&&(ImportService.KIND_ZIP.equals(kind)||ImportService.KIND_ISO.equals(kind))){pendingUri=Uri.parse(uri);pendingType=ImportService.KIND_ZIP.equals(kind)?PICK_ZIP:PICK_ISO;pendingName=ImportSource.displayName(this,pendingUri);selected.setText("Import stopped before completion. Retry the selected file when ready.");importButton.setText("RETRY IMPORT");importButton.setEnabled(true);}
             showNotice("Android stopped the import. The previous installation remains available.");return;
         }
-        if(!ImportJobState.terminal(phase))showNotice("Asset import is running in the background: "+phase.name().toLowerCase().replace('_',' ')+".");
-        else if(phase==ImportModel.Phase.FAILED||phase==ImportModel.Phase.CANCELLED)showNotice(prefs.getString("message","Import did not finish."));
+        if(!ImportJobState.terminal(phase)) {
+            playButton.setEnabled(false);importButton.setEnabled(false);
+            long done=prefs.getLong("completed",0),total=prefs.getLong("total",-1);
+            String amount=String.format(java.util.Locale.ROOT,"%.1f MB",done/1000000.0);
+            if(total>0)amount+=String.format(java.util.Locale.ROOT," / %.1f MB",total/1000000.0);
+            showNotice("Import "+phase.name().toLowerCase().replace('_',' ')+" · "+amount+"\n"+prefs.getString("item","")+"\nKeep the app open while files are checked.");
+        }
+        else if(phase==ImportModel.Phase.FAILED||phase==ImportModel.Phase.CANCELLED){showNotice(prefs.getString("message","Import did not finish."));refreshStatus();importButton.setEnabled(pendingUri!=null&&(pendingType==PICK_ZIP||pendingType==PICK_ISO));}
     }
     private void showNotice(String text){if(notice!=null)notice.setText(text);}
     private Button button(String text,Runnable action) {Button b=new Button(this);b.setText(text);b.setOnClickListener(v->action.run());return b;}

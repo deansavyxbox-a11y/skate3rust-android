@@ -339,24 +339,7 @@ def build_composite_images(
     return outputs
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    parser.add_argument(
-        "--owned-data-root",
-        type=Path,
-        default=PROJECT_ROOT / "work" / "private-assets" / "owned-game",
-    )
-    parser.add_argument(
-        "--utt-root",
-        type=Path,
-        default=PROJECT_ROOT / "tools" / "vendor" / "utt",
-    )
-    parser.add_argument("--work-root", type=Path, default=DEFAULT_WORK)
-    parser.add_argument("--private-root", type=Path, default=DEFAULT_PRIVATE)
-    parser.add_argument("--verify-only", action="store_true")
-    args = parser.parse_args()
-
+def extract(args: argparse.Namespace) -> int:
     manifest = json.loads(require_file(args.manifest, "retail manifest").read_text())
     recipe_hash = manifest["preset"]["recipe_sha256"]
     recipe = require_file(
@@ -475,6 +458,25 @@ def main() -> int:
         f"verify_only={args.verify_only}"
     )
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument(
+        "--owned-data-root",
+        type=Path,
+        default=PROJECT_ROOT / "work" / "private-assets" / "owned-game",
+    )
+    parser.add_argument(
+        "--utt-root",
+        type=Path,
+        default=PROJECT_ROOT / "tools" / "vendor" / "utt",
+    )
+    parser.add_argument("--work-root", type=Path, default=DEFAULT_WORK)
+    parser.add_argument("--private-root", type=Path, default=DEFAULT_PRIVATE)
+    parser.add_argument("--verify-only", action="store_true")
+    return extract(parser.parse_args())
 
 
 if __name__ == "__main__":

@@ -190,9 +190,10 @@ def convert_map(archive,work,maps,stage,game_exe,log,report):
         placed,unresolved=0,0
     finished('props')
     report(f'{label}: placed {placed} authored DMO instances, {unresolved} unresolved templates')
-    report('Checking converted map: '+label)
-    run([game_exe,'--assets',stage/'assets','--map',final,'--check-assets'],log,report)
-    finished('validate')
+    if game_exe is not None:
+        report('Checking converted map: '+label)
+        run([game_exe,'--assets',stage/'assets','--map',final,'--check-assets'],log,report)
+        finished('validate')
     entry={'name':label,'path':'maps/'+final.name,'sha256':digest(final)}
     remove_intermediate(district_work,work)
     finished('hash_and_cleanup')

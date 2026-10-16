@@ -1,6 +1,8 @@
 """Owned-disc exports, separate from setup transaction orchestration."""
 import json
 import shutil
+import argparse
+import sys
 from pathlib import Path
 from . import install as engine
 from .vlt import convert as convert_vlt
@@ -28,11 +30,11 @@ def core(game_root, stage, work, report, log, converted=None):
 
 
 def hud(game_root, stage, work, report, log, converted=None):
-    private=stage/"assets/private"
-    stock=private/"stock"
     report('Preparing original scoring and session-marker HUD assets')
-    engine.run(engine.task(engine.TOOLS/'prepare_runtime_huds.py', '--game', game_root,
-             '--assets', stage/'assets', '--work', work/'hud'), log, report)
+    if str(engine.TOOLS) not in sys.path:
+        sys.path.insert(0, str(engine.TOOLS))
+    from prepare_runtime_huds import prepare
+    prepare(game_root, stage/'assets', work/'hud')
 
 
 def character(game_root, stage, work, report, log, converted=None):
@@ -46,8 +48,13 @@ def character(game_root, stage, work, report, log, converted=None):
         needed.update(f'data/content/createacharacter/texture/0x{x}.rx2'.lower() for x in c['textures'].values())
     engine.extract(game_root/'data/content/createacharacter.big',stock,lambda e:e.path.lower() in needed)
     character=work/'character'
-    engine.run(engine.task(engine.TOOLS/'extract_default_skater.py','--owned-data-root',stock,'--work-root',character,
-             '--private-root',private/'default_skater','--utt-root',engine.TOOLS/'vendor/utt'),log,report)
+    if str(engine.TOOLS) not in sys.path:
+        sys.path.insert(0, str(engine.TOOLS))
+    import extract_default_skater
+    extract_default_skater.extract(argparse.Namespace(
+        manifest=engine.TOOLS/'default_skater_retail_manifest.json',
+        owned_data_root=stock, utt_root=engine.TOOLS/'vendor/utt',
+        work_root=character, private_root=private/'default_skater', verify_only=False))
     report('Building the skater model and rig')
     from .character_glb import convert as write_character
     write_character(character/'selected/models',private,manifest)

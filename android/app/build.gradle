@@ -1,4 +1,4 @@
-plugins { id 'com.android.application' }
+plugins { id 'com.android.application'; id 'com.chaquo.python' }
 dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20250107'
@@ -14,15 +14,38 @@ android {
         applicationId 'com.skate3rust.android'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '0.1.0-experimental'
+        versionCode 2
+        versionName '0.2.0-rc1'
         ndk { abiFilters 'arm64-v8a' }
     }
     buildTypes { debug { debuggable true; jniDebuggable true } }
     packaging { jniLibs { useLegacyPackaging true } }
+    sourceSets { main.assets.srcDir layout.buildDirectory.dir('generated/python-assets') }
+}
+chaquopy {
+    defaultConfig {
+        version = '3.13'
+        buildPython 'py.exe', '-3.13'
+        pip {
+            install 'numpy==1.26.2'
+            install 'Pillow==11.0.0'
+        }
+    }
+    sourceSets { main { srcDir layout.buildDirectory.dir('generated/python') } }
+}
+tasks.register('prepareAndroidPython', Exec) {
+    workingDir rootProject.projectDir
+    commandLine 'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'copy-android-python.ps1',
+            '-SourceRoot', rootProject.projectDir.parentFile, '-OutputRoot', layout.buildDirectory.dir('generated/python').get().asFile,
+            '-AssetsRoot', layout.buildDirectory.dir('generated/python-assets/android-python').get().asFile
+}
+tasks.configureEach { task ->
+    if (task.name.endsWith('PythonSources') || task.name.endsWith('Assets')) {
+        task.dependsOn tasks.named('prepareAndroidPython')
+    }
 }
 tasks.register('buildRust', Exec) {
     workingDir rootProject.projectDir
     commandLine 'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'build-rust.ps1', '-Profile', providers.gradleProperty('skateRustProfile').getOrElse('release')
 }
-tasks.named('preBuild').configure { dependsOn 'buildRust' }
+tasks.named('preBuild').configure { dependsOn 'buildRust', 'prepareAndroidPython' }

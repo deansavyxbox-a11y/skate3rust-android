@@ -51,6 +51,24 @@ public class PreparedZipImporterTest {
         assertEquals(1,result.maps.size());assertEquals("University",result.maps.get(0));
         result.verify(stage,progress,cancel);assertArrayEquals(original,source);
     }
+    @Test public void acceptsDocumentProviderWithShortReads()throws Exception {
+        byte[] source=archive(null,false,false);
+        InputStream fragmented=new ByteArrayInputStream(source){
+            @Override public synchronized int read(byte[] b,int off,int len){return super.read(b,off,Math.min(len,37));}
+        };
+        File stage=staging();
+        AssetManifest result=PreparedZipImporter.importFrom(fragmented,stage,progress,cancel);
+        result.verify(stage,progress,cancel);
+    }
+    @Test public void readsEndRecordBeyondZipStreamReadAhead()throws Exception {
+        byte[] source=archive(null,false,false);
+        byte[] extended=java.util.Arrays.copyOf(source,source.length+20000);
+        java.nio.ByteBuffer.wrap(extended).order(java.nio.ByteOrder.LITTLE_ENDIAN).putShort(source.length-2,(short)20000);
+        java.util.Arrays.fill(extended,source.length,extended.length,(byte)'x');
+        File stage=staging();
+        AssetManifest result=PreparedZipImporter.importFrom(new ByteArrayInputStream(extended),stage,progress,cancel);
+        result.verify(stage,progress,cancel);
+    }
     private byte[] asUnixSymlink(byte[] archive) {
         byte[] marked=archive.clone();
         for(int i=0;i+46<marked.length;i++)if((marked[i]&255)==0x50&&(marked[i+1]&255)==0x4b&&(marked[i+2]&255)==0x01&&(marked[i+3]&255)==0x02) {

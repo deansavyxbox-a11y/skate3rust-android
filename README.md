@@ -11,20 +11,62 @@ Experimental native ARM64 Android port of [SK8-ENGINE/skate-3-rust-engine](https
 - USB controller support and multitouch sticks/buttons, with automatic controller detection.
 - Movable touch controls: Menu → Graphics → Touch controls. Drag controls, then Save. Cancel discards edits; Reset previews defaults until saved.
 - Android launcher icon and branded loading screen with native loading status.
+- On-phone prepared ZIP import and direct conversion of your own Xbox 360 ISO in the upcoming `0.2.0-rc1` candidate. Both paths completed on RedMagic 10 Pro; other phones and ISO variants are unverified.
 
 Tested on a RedMagic 10 Pro (Android 16, Adreno 830). Other devices are unverified. Requires ARM64, Android 8 or newer and compatible Vulkan support; this is not a compatibility guarantee.
 
 ## Before downloading
 
-**The APK does not include Skate 3 game assets.** You need your own Xbox 360 game copy, a Windows PC to prepare the assets, and ADB to install them. There is currently no on-phone asset importer. Installing only the APK does not provide the original maps or characters.
+**The APK does not include Skate 3 game assets.** You need your own Xbox 360 game copy. The currently published `0.1.0-experimental` APK requires Windows/ADB asset setup. The unpublished `0.2.0-rc1` candidate adds a choice of prepared ZIP import or direct ISO conversion on the phone. Installing only an APK does not provide the original maps or characters.
 
 Follow the [setup guide](docs/ANDROID_PORT.md). Do not upload ISOs, extracted game files, converted maps, textures or other proprietary assets to this repository or its issues.
 
 This is an experimental, debuggable APK because the current asset installer uses Android `run-as`. It uses a development signing certificate. Contributor builds may have different certificates and cannot necessarily update an existing install. Uninstalling clears app-private game assets, settings and touch layouts; back up your data first.
 
+## Installing the public APK
+
+Download `skate3rust-android-polished.apk` and `SHA256SUMS.txt` from the [official release](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.1.0-experimental). GitHub's source-code ZIP is not an installable app. This APK supports **64-bit ARM Android installations (`arm64-v8a`), Android 8 / API 26 or newer**. A 64-bit processor running a 32-bit Android system is insufficient. Compatible Vulkan graphics are also required for gameplay; meeting the installation requirements does not guarantee rendering compatibility.
+
+On the phone, open the APK and allow installation from the browser or file manager you used when Android requests it. Managed-device policies may restrict sideloading. Keep your device's security protections enabled; if installation is blocked, capture the message before changing anything.
+
+For a Windows PC, verify the download and install with [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools):
+
+```powershell
+Get-FileHash .\skate3rust-android-polished.apk -Algorithm SHA256
+adb devices -l
+adb install -r .\skate3rust-android-polished.apk
+```
+
+Compare the hash with `SHA256SUMS.txt` from that same release. The `-r` option requests reinstall/update while retaining app data, provided the package and signing certificate are compatible. Do not uninstall or clear app storage as a routine update step: this removes imported assets, settings and your touch layout. APK installation and [game-asset setup](docs/ANDROID_PORT.md) are separate steps.
+
+### If Android says “App not installed”
+
+That message alone does not identify the cause. Use the ADB command above and include its complete `Failure [...]` output in an issue, together with the release filename, phone model, Android version and whether this was a first install or update. Do not attach game assets or private device information.
+
+| ADB result / symptom | Meaning and next step |
+| --- | --- |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Usually an installed copy has a different signing certificate. Check whether it came from another contributor or your own build. Obtain a matching-signer update; preserve assets/settings before considering removal. A different Android user/profile may also retain the package. |
+| `INSTALL_FAILED_NO_MATCHING_ABIS` | This APK needs `arm64-v8a` Android userspace. Check `adb shell getprop ro.product.cpu.abilist`. There is no ARM32 or x86 APK in this release. |
+| `INSTALL_FAILED_OLDER_SDK` | Check `adb shell getprop ro.build.version.sdk`; this release requires API 26 or newer. |
+| `INSTALL_FAILED_VERSION_DOWNGRADE` | An installed copy has a higher version code. Use a compatible newer build; do not force a downgrade as a routine fix. |
+| `INSTALL_FAILED_INSUFFICIENT_STORAGE` | Free internal storage and retry. APK size is smaller than the installed footprint, particularly with extracted native libraries and the candidate's Python runtime. Game assets and import staging require additional space. |
+| `INSTALL_PARSE_FAILED_*`, invalid APK, or a different checksum | Download the official APK again and verify its checksum; preserve the exact error if it persists. |
+| `INSTALL_FAILED_USER_RESTRICTED` or device-policy warning | Check the device's sideloading/USB installation permissions or contact its administrator. |
+| ADB says `Success`, but launch fails or maps are missing | Installation succeeded. Report launch logs and asset-setup status separately; GPU/driver support and missing assets require different investigation. |
+
+These are troubleshooting possibilities, **not confirmed explanations for the reported viewer failure**. The [published APK audit](docs/APK_COMPATIBILITY_AUDIT.md) records the exact artifact checks, certificate fingerprint and current testing gaps. Debug signing alone does not establish that a fresh install must fail.
+
+## On-phone setup (0.2.0-rc1 candidate)
+
+See the [step-by-step setup guide](docs/ANDROID_PORT.md). Choose **IMPORT PREPARED ASSETS (.ZIP)** for an Android package prepared on a PC, or **IMPORT XBOX 360 ISO** to convert your own disc image entirely on the phone. Keep the app open and the phone powered during conversion. The original file is retained; a new installation is validated before it replaces the active assets. **RESTORE PREVIOUS ASSETS** returns to the retained previous generation.
+
+Direct ISO import is experimental and needs substantial free internal storage. The successful test began with about 38 GB free, with the source ISO already on the phone; this is a tested condition, not a universal space requirement. If the ISO is missing from the Downloads picker, open the picker's sidebar and browse internal storage → Download. If Android stops the job, reopen the app and retry; conversion restarts rather than resuming every intermediate step. Keep the source file until import succeeds. See [ISO validation and limitations](android/ISO_IMPORT_VALIDATION.md).
+
 ## Known limitations
 
 Gameplay parity remains in progress. Some park decals/materials are incomplete; dynamic park objects use static initial placements. Audio parity, wardrobe expansion, multiplayer, broad device compatibility and sustained thermal performance are not established for Android. There is no automatic Android updater. See the guide for validation scope.
+
+The unpublished candidate is not cleared for 16 KB page-size devices: its embedded FreeType library has 4 KB alignment. A close/clipped camera view at the saved DownTownSkatePark spawn also needs follow-up. See the [candidate validation report and remaining release gates](android/RELEASE_CANDIDATE_0.2.0_RC1.md).
 
 ## Source and attribution
 

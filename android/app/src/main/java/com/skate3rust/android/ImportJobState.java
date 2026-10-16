@@ -28,6 +28,9 @@ final class ImportJobState {
     static Snapshot restore(String id,ImportModel.Phase phase,long completed,long total,String item) {
         return new Snapshot(id,terminal(phase)?phase:ImportModel.Phase.INTERRUPTED,Math.max(0,completed),total,item==null?"":item,"Import stopped when Android closed the worker. Retry when ready.");
     }
+    static ImportModel.Phase visiblePhase(ImportModel.Phase saved,boolean workerRunning) {
+        return saved!=ImportModel.Phase.IDLE&&!terminal(saved)&&!workerRunning?ImportModel.Phase.INTERRUPTED:saved;
+    }
     static boolean terminal(ImportModel.Phase phase) {
         return phase==ImportModel.Phase.COMPLETE||phase==ImportModel.Phase.CANCELLED||phase==ImportModel.Phase.FAILED||phase==ImportModel.Phase.INTERRUPTED;
     }

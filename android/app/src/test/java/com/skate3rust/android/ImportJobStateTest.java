@@ -27,4 +27,10 @@ public class ImportJobStateTest {
         state.report(ImportModel.Phase.IMPORTING,90,100,"entry");
         assertEquals(ImportModel.Phase.FAILED,state.snapshot().phase);
     }
+    @Test public void interruptedWorkerDoesNotKeepSetupLockedAfterProcessRestart() {
+        assertEquals(ImportModel.Phase.INTERRUPTED,ImportJobState.visiblePhase(ImportModel.Phase.CONVERTING,false));
+        assertEquals(ImportModel.Phase.CONVERTING,ImportJobState.visiblePhase(ImportModel.Phase.CONVERTING,true));
+        assertEquals(ImportModel.Phase.COMPLETE,ImportJobState.visiblePhase(ImportModel.Phase.COMPLETE,false));
+        assertEquals(ImportModel.Phase.IDLE,ImportJobState.visiblePhase(ImportModel.Phase.IDLE,false));
+    }
 }

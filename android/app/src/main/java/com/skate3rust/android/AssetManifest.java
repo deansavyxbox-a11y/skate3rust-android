@@ -50,6 +50,52 @@ final class AssetManifest {
             return new AssetManifest(entries,maps,total);
         } catch(JSONException|ArithmeticException e){throw new IOException("Invalid prepared asset metadata",e);}
     }
+    /** Builds the same integrity contract used by prepared ZIP imports for native conversion output. */
+    static AssetManifest create(File root,ImportModel.Progress progress,ImportModel.Cancellation cancel)throws IOException {
+        try {
+            JSONArray maps=new JSONArray(json(new File(root,"maps.json")));
+            if(maps.length()==0)throw new IOException("No converted maps are available");
+            List<String> names=new ArrayList<>();
+            for(int i=0;i<maps.length();i++) {
+                JSONObject item=maps.getJSONObject(i);String name=item.getString("name");
+                if(!name.matches("[A-Za-z0-9_-]{1,100}")||names.contains(name))throw new IOException("Invalid converted map catalog");
+                names.add(name);
+            }
+            List<Path> files=new ArrayList<>();
+            try(var paths=Files.walk(root.toPath())) {
+                for(Iterator<Path> it=paths.iterator();it.hasNext();) {
+                    Path path=it.next();cancel.check();
+                    if(Files.isSymbolicLink(path))throw new IOException("Asset links are not supported");
+                    if(!Files.isRegularFile(path))continue;
+                    String relative=root.toPath().relativize(path).toString().replace(File.separatorChar,'/');
+                    if(relative.equals("maps.json")||relative.equals("complete.json")||relative.equals("transfer-manifest.json")||relative.equals("sha256sum.checks"))continue;
+                    validatePath(relative);
+                    if(!(relative.startsWith("assets/")||relative.startsWith("maps/")||relative.startsWith("settings/")))
+                        throw new IOException("Unexpected converted file root: "+relative);
+                    files.add(path);
+                }
+            }
+            files.sort(Comparator.comparing(path->root.toPath().relativize(path).toString().replace(File.separatorChar,'/')));
+            if(files.isEmpty()||files.size()>MAX_ENTRIES)throw new IOException("Invalid converted asset file count");
+            long total=0;JSONArray records=new JSONArray();StringBuilder checks=new StringBuilder();byte[] buffer=new byte[128*1024];
+            for(Path path:files) {
+                cancel.check();String relative=root.toPath().relativize(path).toString().replace(File.separatorChar,'/');
+                MessageDigest hash=digest();long count=0;
+                try(InputStream in=Files.newInputStream(path)) {
+                    int n;while((n=in.read(buffer))!=-1){cancel.check();count=Math.addExact(count,n);if(count>MAX_BYTES)throw new IOException("Converted file is too large");hash.update(buffer,0,n);}
+                }
+                total=Math.addExact(total,count);if(total>MAX_BYTES)throw new IOException("Converted installation is too large");
+                String sha=hex(hash.digest());records.put(new JSONObject().put("path",relative).put("size",count).put("sha256",sha));
+                checks.append(sha).append("  ").append(relative).append('\n');
+                progress.report(ImportModel.Phase.VALIDATING,total,-1,relative);
+            }
+            writeAtomically(new File(root,"transfer-manifest.json"),records.toString());
+            writeAtomically(new File(root,"complete.json"),new JSONObject().put("version",1).put("files",files.size()).put("bytes",total).put("maps",new JSONArray(names)).toString());
+            writeAtomically(new File(root,"sha256sum.checks"),checks.toString());
+            Files.deleteIfExists(new File(root,"maps.json").toPath());
+            return read(root);
+        } catch(JSONException|ArithmeticException e){throw new IOException("Could not create converted asset manifest",e);}
+    }
     void verify(File root,ImportModel.Progress progress,ImportModel.Cancellation cancel)throws IOException {
         long done=0;byte[] buffer=new byte[128*1024];
         for(Entry e:entries.values()) {

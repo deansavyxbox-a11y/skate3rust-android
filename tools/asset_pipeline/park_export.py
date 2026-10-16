@@ -108,8 +108,8 @@ def _start(game_root, selected):
     return tuple(m[3][:3]), math.atan2(m[2][0],m[2][2])
 
 
-def export_full_park(game_root: Path, district: str, destination: Path, *, catalog=None) -> ExportReceipt:
-    selected = full_selection(_collections(game_root),district)
+def export_full_park(game_root: Path, district: str, destination: Path, *, catalog=None, collections=None) -> ExportReceipt:
+    selected = full_selection(_collections(game_root) if collections is None else collections,district)
     archive = BigArchive(game_root/'data/big/miscload.big')
     raw,layout = load_selected_layout(archive,selected)
     spawn, heading = _start(game_root,selected)

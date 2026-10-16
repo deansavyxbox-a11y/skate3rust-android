@@ -39,3 +39,7 @@ pub extern "system" fn Java_com_skate3rust_android_NativeAssetValidator_nativeEx
 }
 
 fn throw(env:&mut JNIEnv<'_>,message:String)->jstring {let _=env.throw_new("java/io/IOException",message);std::ptr::null_mut()}
+
+// Reuse the bounds-checked decoder used by the desktop converter.
+#[path = "../../../tools/asset_pipeline/refpack_native.rs"]
+mod refpack_native;

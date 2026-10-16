@@ -69,6 +69,26 @@ public class InstallationStoreTest {
         File outside=ImportFixtures.create(temp.newFolder(),"University");
         assertThrows(IOException.class,()->store.publish(outside,progress,cancel));
     }
+    @Test public void interruptedJobCleanupPreservesInstalledAndUnrelatedFiles()throws Exception {
+        File root=temp.newFolder();InstallationStore store=new InstallationStore(root);
+        ImportFixtures.create(new File(root,"installation"),"University");
+        ImportFixtures.create(new File(root,"installation.previous"),"MegaPark");
+        File old=store.newStaging("stopped-job");ImportFixtures.write(old,"conversion/source.iso","private partial copy");
+        File other=store.newStaging("unrelated-job");ImportFixtures.write(other,"keep.txt","keep");
+        store.discardInterruptedStaging("stopped-job");
+        assertFalse(old.exists());assertTrue(other.exists());assertTrue(store.isPlayable());
+        assertTrue(new File(root,"installation.previous/maps/MegaPark.skate").isFile());
+        assertThrows(IOException.class,()->store.discardInterruptedStaging("../installation"));
+    }
+    @Test public void interruptedCleanupRecoversPublicationBeforeRemovingStage()throws Exception {
+        File root=temp.newFolder();ImportFixtures.create(new File(root,"installation"),"MegaPark");
+        InstallationStore store=new InstallationStore(root,boundary->{if(boundary.equals("old-renamed"))throw new IOException("process death");});
+        File next=ImportFixtures.create(store.newStaging("stopped-job"),"University");
+        assertThrows(IOException.class,()->store.publish(next,progress,cancel));
+        InstallationStore recovered=new InstallationStore(root);recovered.discardInterruptedStaging("stopped-job");
+        assertTrue(recovered.isPlayable());assertTrue(new File(root,"installation/maps/University.skate").isFile());
+        assertTrue(new File(root,"installation.previous/maps/MegaPark.skate").isFile());
+    }
     @Test public void acceptsPowerShellBomAndRejectsUnlistedPayload()throws Exception {
         File stage=ImportFixtures.create(temp.newFolder(),"University");
         ImportFixtures.write(stage,"complete.json","\ufeff"+ImportFixtures.read(stage,"complete.json"));

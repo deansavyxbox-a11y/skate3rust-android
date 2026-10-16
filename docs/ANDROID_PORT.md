@@ -1,6 +1,30 @@
 # Android setup and development
 
-## Install on a phone (Windows PC required)
+## Install and import on the phone (0.2.0-rc1 candidate)
+
+The currently published `0.1.0-experimental` APK uses the PC route below. On-phone import is in the unpublished `0.2.0-rc1` candidate. Download only the intended APK and verify its release checksum. Update with the same signer without uninstalling; uninstalling or clearing storage removes imported assets and settings. See [installation troubleshooting](../README.md#if-android-says-app-not-installed).
+
+1. Install the candidate APK and launch Skate 3 Rust. Existing installations remain available through **PLAY**.
+2. Choose one input:
+   - **IMPORT PREPARED ASSETS (.ZIP)**: select an Android asset package prepared using the commands below. A source-code ZIP or arbitrary game-data ZIP is not this format.
+   - **IMPORT XBOX 360 ISO**: select your own Xbox 360 `.iso` image. If Downloads hides it, use the picker sidebar → internal storage/device name → Download and browse to the file.
+3. Tap **CONTINUE IMPORT**. Keep the app open, the phone powered, and enough internal storage available. Progress reports phases; conversion may take time without a byte total. The ISO is copied privately, extracted and converted on the phone. Internet access is not required for game-asset conversion.
+4. Wait for **Import complete** and tap **PLAY**. First gameplay loading can take tens of seconds. The original ZIP/ISO is not deleted. Imported assets are checked before publication, and a previous generation is retained for **RESTORE PREVIOUS ASSETS**.
+
+The full ISO test used a 7.84 GB source with about 38 GB free internal storage after placing the ISO on the phone. Private ISO copy, extracted disc, intermediates and new assets coexist during processing; storage varies by input. This is not a guaranteed minimum. Prepared ZIP import uses less conversion workspace. If a job fails, read its message and preserve the original input. After an interrupted process, Retry restarts conversion; it does not resume all intermediate work. Cancellation may wait for the current converter stage.
+
+### Prepare a ZIP on Windows
+
+Prepare a fresh staging directory using the PC instructions below, including park supplements where required. Then, from the repository root:
+
+```powershell
+pwsh -File android/package-assets.ps1 -Staging C:\SkateStaging\android-assets-full -Output C:\SkateStaging\skate3rust-assets.zip
+adb push C:\SkateStaging\skate3rust-assets.zip /sdcard/Download/
+```
+
+USB file transfer also works. Select this ZIP through the app; do not unzip it into Downloads. Keep prepared packages private. See [prepared ZIP test results](../android/IMPORTER_TEST_RESULTS.md) and [direct ISO results](../android/ISO_IMPORT_VALIDATION.md) for tested scope.
+
+## Install using a Windows PC and ADB
 
 1. Download the APK from this fork's Android prerelease. Install Android SDK Platform Tools and enable USB debugging on the phone. Authorize your PC. These scripts currently target Windows and one connected Android device.
 2. Use the [upstream Windows build](https://github.com/SK8-ENGINE/skate-3-rust-engine/releases/tag/experimental) to prepare assets from your own Skate 3 Xbox 360 ISO or extracted `default.xex`. Keep the resulting Windows package and its `data/installation.json` and `data/installations/...` folders intact. This Android version was tested against upstream build 29; later converter formats are unverified.
@@ -35,7 +59,7 @@ Use a USB controller, or the touchscreen sticks and action buttons. Touch contro
 
 ## Build from source on Windows
 
-Install Git, Rust stable with the `aarch64-linux-android` target, Visual Studio C++ build tools, Java 17, Android SDK Platform 35 and NDK 29.0.14206865. Rust dependencies use edition 2024. The Gradle wrapper supplies Gradle 8.13 and Android Gradle Plugin 8.9.2. Android SDK licenses must be accepted.
+Install Git, Rust stable with the `aarch64-linux-android` target, Visual Studio C++ build tools, Java 17, Android SDK Platform 35 and NDK 29.0.14206865. Install Python 3.13 through the Windows Python launcher (`py -3.13`) for Chaquopy's build step. Rust dependencies use edition 2024. The Gradle wrapper supplies Gradle 8.13 and Android Gradle Plugin 8.9.2; Chaquopy 17.1.0 supplies the embedded Android Python runtime. Android SDK licenses must be accepted. The initial build downloads dependencies.
 
 ```powershell
 rustup target add aarch64-linux-android

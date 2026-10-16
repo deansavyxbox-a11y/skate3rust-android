@@ -1,3 +1,5 @@
+//! Bounded XDVDFS reader for the fixed XISO/XGD1/XGD2/XGD3 volume locations.
+//! Field offsets and partition bases follow the public XboxDev extract-xiso format constants.
 use serde::Serialize;
 use std::{collections::HashSet, fs::{self,OpenOptions}, io::{self,Read,Seek,SeekFrom,Write}, path::Path};
 
@@ -119,5 +121,3 @@ mod tests {
     #[test] fn cancellation_stops_extraction(){let mut image=image(0,80,b"default.xex",100,4096);let index=inspect_iso(&mut image).unwrap();let result=extract_files(&mut image,&index,std::path::Path::new("unused"),&||true,&|_,_,_|{});assert!(result.is_err());}
     #[test] fn extracts_bounded_file_bytes(){let mut image=image(0,80,b"default.xex",100,3);put(&mut image,100*2048,b"abc");let index=inspect_iso(&mut image).unwrap();let root=std::env::temp_dir().join(format!("skate-xdvdfs-{}",std::process::id()));let _=std::fs::remove_dir_all(&root);extract_files(&mut image,&index,&root,&||false,&|_,_,_|{}).unwrap();assert_eq!(std::fs::read(root.join("default.xex")).unwrap(),b"abc");std::fs::remove_dir_all(root).unwrap();}
 }
-//! Bounded XDVDFS reader for the fixed XISO/XGD1/XGD2/XGD3 volume locations.
-//! Field offsets and partition bases follow the public XboxDev extract-xiso format constants.

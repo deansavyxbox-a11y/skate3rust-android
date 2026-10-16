@@ -20,6 +20,23 @@ final class InstallationStore {
         File stage=new File(root,"import-"+id+".pending");if(!stage.mkdir())throw new IOException("Import staging already exists");return stage;
     }
     void recover()throws IOException {try(LockHandle ignored=lock()){recoverLocked();}}
+    /** Called by the serialized worker before allocating a retry's new staging directory. */
+    void discardInterruptedStaging(String id)throws IOException {
+        if(id==null||id.isEmpty())return;
+        if(!id.matches("[A-Za-z0-9_-]{1,80}"))throw new IOException("Invalid interrupted import identifier");
+        try(LockHandle ignored=lock()) {
+            // A publication journal may still own this stage: finish recovery first.
+            recoverLocked();
+            File abandoned=new File(root,"import-"+id+".pending");
+            if(!abandoned.exists())return;
+            if(Files.isSymbolicLink(abandoned.toPath())||!abandoned.getCanonicalFile().getParentFile().equals(root))
+                throw new IOException("Interrupted staging escaped app storage");
+            // Files.walk does not follow symbolic links; never traverse outside the owned directory.
+            try(var paths=Files.walk(abandoned.toPath())) {
+                for(Path path:paths.sorted(Comparator.reverseOrder()).toArray(Path[]::new))Files.delete(path);
+            }
+        }
+    }
     boolean isPlayable(){return playable(live);}
     private boolean playable(File directory) {
         try{AssetManifest manifest=AssetManifest.read(directory);manifest.verifyRuntime(directory);return true;}catch(IOException e){return false;}

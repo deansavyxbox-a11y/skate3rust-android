@@ -9,7 +9,14 @@ import android.view.View;
 public final class LaunchActivity extends Activity {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private LaunchScreenView screen;
-    private boolean started;
+    private boolean started,waitingForFocusRelease;
+    private final Runnable launchNative=()->{
+        if(started||isFinishing())return;
+        waitingForFocusRelease=false;started=true;
+        android.util.Log.i("SKATE_ANDROID","Loading window focus released; starting native activity");
+        startActivity(new Intent(LaunchActivity.this,GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_NO_ANIMATION));
+        handler.post(LaunchActivity.this.poll);
+    };
     private final Runnable poll=new Runnable(){public void run(){
         if(isFinishing())return;
         int phase=StartupStatus.stage();screen.stage(phase);
@@ -25,10 +32,19 @@ public final class LaunchActivity extends Activity {
             boolean dispatched;
             public void onDraw(){if(dispatched)return;dispatched=true;screen.post(()->{
                 if(isFinishing())return;
-                started=true;startActivity(new Intent(LaunchActivity.this,GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_NO_ANIMATION));
-                handler.post(poll);
+                // NativeActivity startup can wait on the native event loop during asset loading.
+                // Acknowledge this window's focus loss before starting that work, otherwise its
+                // input channel can time out while the UI thread is inside NativeActivity.
+                waitingForFocusRelease=true;
+                getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                        android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+                if(!getWindow().getDecorView().hasWindowFocus())handler.post(launchNative);
             });}
         });
     }
-    @Override public void onDestroy(){handler.removeCallbacks(poll);super.onDestroy();}
+    @Override public void onWindowFocusChanged(boolean focused){
+        super.onWindowFocusChanged(focused);
+        if(!focused&&waitingForFocusRelease)handler.post(launchNative);
+    }
+    @Override public void onDestroy(){handler.removeCallbacks(poll);handler.removeCallbacks(launchNative);super.onDestroy();}
 }

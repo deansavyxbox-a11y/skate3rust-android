@@ -45,6 +45,10 @@ final class PreparedZipImporter {
                 }
                 zip.closeEntry();
             }
+            // ZipInputStream stops at the first central-directory header rather than EOF.
+            // Its inflater/buffer may already have read some metadata into ZipTail; drain only
+            // the still-unread source bytes so the bounded tail includes the actual end record.
+            tail.finish(cancellation);
             tail.verifyCentralDirectory(observed);
         } catch(UncheckedIOException e){throw e.getCause();}
         catch(IOException|RuntimeException e){
@@ -75,6 +79,15 @@ final class PreparedZipImporter {
         }
         @Override public int read(byte[] bytes,int offset,int length)throws IOException {
             int count=super.read(bytes,offset,length);if(count>0){for(int i=0;i<count;i++)ring[(int)((total+i)%ring.length)]=bytes[offset+i];total+=count;}return count;
+        }
+        void finish(ImportModel.Cancellation cancellation)throws IOException {
+            byte[] buffer=new byte[16*1024];int count;long remaining=0;
+            while(true) {
+                cancellation.check();
+                count=read(buffer,0,buffer.length);if(count<0)return;
+                remaining+=count;
+                if(remaining>ring.length)throw new IOException("Prepared ZIP central metadata exceeds allowed bounds");
+            }
         }
         void verifyCentralDirectory(List<String> observed)throws IOException {
             int available=(int)Math.min(total,ring.length);long base=total-available;byte[] data=new byte[available];
