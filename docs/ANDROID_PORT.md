@@ -1,10 +1,10 @@
 # Android setup and development
 
-## Install and import on the phone (0.2.0-rc1 candidate)
+## Install and import on the phone (0.2.0-rc2 prerelease)
 
-The currently published `0.1.0-experimental` APK uses the PC route below. On-phone import is in the unpublished `0.2.0-rc1` candidate. Download only the intended APK and verify its release checksum. Update with the same signer without uninstalling; uninstalling or clearing storage removes imported assets and settings. See [installation troubleshooting](../README.md#if-android-says-app-not-installed).
+Download `0.2.0-rc2` from the [official prerelease](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc2) and verify its SHA-256 against the release's `SHA256SUMS.txt`. It offers prepared ZIP and direct ISO import on the phone. Update with the same signer without uninstalling; uninstalling or clearing storage removes imported assets and settings. See [installation troubleshooting](../README.md#if-android-says-app-not-installed).
 
-1. Install the candidate APK and launch Skate 3 Rust. Existing installations remain available through **PLAY**.
+1. Install the prerelease APK and launch Skate 3 Rust. Existing installations remain available through **PLAY**.
 2. Choose one input:
    - **IMPORT PREPARED ASSETS (.ZIP)**: select an Android asset package prepared using the commands below. A source-code ZIP or arbitrary game-data ZIP is not this format.
    - **IMPORT XBOX 360 ISO**: select your own Xbox 360 `.iso` image. If Downloads hides it, use the picker sidebar → internal storage/device name → Download and browse to the file.
