@@ -31,6 +31,12 @@ pub(crate) fn attach_map(assets:&Path,path:&Path,map:skate_data::skate_map::Skat
     let extra=crate::config::map_fingerprint(Some(&extra_path))?;
     if extra!=entry.supplement_fingerprint {return Err("Park package fingerprint mismatch".into());}
     let map=map.with_supplement(skate_data::skate_map::SkateMap::load(&extra_path)?)?;
+    #[cfg(any(target_os="android",test))]
+    let map={
+        let mut map=map;
+        crate::android_map_starts::correct_park_start(name,extra,&mut map.spawn);
+        map
+    };
     // Bind multiplayer identity to both packages, leaving legacy identities
     // unchanged for installations without supplemental data.
     let combined=base.to_le_bytes().into_iter().chain(extra.to_le_bytes())

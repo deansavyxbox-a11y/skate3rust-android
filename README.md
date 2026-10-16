@@ -68,6 +68,8 @@ Gameplay parity remains in progress. Some park decals/materials are incomplete; 
 
 The unpublished candidate is not cleared for 16 KB page-size devices: its embedded FreeType library has 4 KB alignment. A close/clipped camera view at the saved DownTownSkatePark spawn also needs follow-up. See the [candidate validation report and remaining release gates](android/RELEASE_CANDIDATE_0.2.0_RC1.md).
 
+The subsequent unpublished [0.2.0-rc2 candidate](android/RELEASE_NOTES_0.2.0_RC2.md) adjusts that park's default start above the raised platform. Its [spawn validation report](android/DOWNTOWN_SPAWN_VALIDATION.md) distinguishes completed build/install checks from pending on-phone visual checks.
+
 ## Source and attribution
 
 Original engine and reverse-engineering work: [SK8-ENGINE and upstream contributors](https://github.com/SK8-ENGINE/skate-3-rust-engine). See [the original README](README-UPSTREAM.md), [GPL-3.0 license](LICENSE), and notices retained in dependency/vendor folders. The root license is preserved from upstream's current main branch; third-party notices continue to apply. Android port work is published in this fork with its source.

@@ -19,6 +19,8 @@ mod config;
 mod setup;
 mod updater;
 mod map_library;
+#[cfg(any(target_os="android",test))]
+mod android_map_starts;
 mod map_render;
 mod map_transition;
 mod difficulty;
