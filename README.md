@@ -46,7 +46,7 @@ That message alone does not identify the cause. Use the ADB command above and in
 | ADB result / symptom | Meaning and next step |
 | --- | --- |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Usually an installed copy has a different signing certificate. Check whether it came from another contributor or your own build. Obtain a matching-signer update; preserve assets/settings before considering removal. A different Android user/profile may also retain the package. |
-| `INSTALL_FAILED_NO_MATCHING_ABIS` | This APK needs `arm64-v8a` Android userspace. Check `adb shell getprop ro.product.cpu.abilist`. There is no ARM32 or x86 APK in this release. |
+| `INSTALL_FAILED_NO_MATCHING_ABIS` | This APK needs `arm64-v8a` Android userspace. Check `adb shell getprop ro.product.cpu.abilist`; a 64-bit processor can still run 32-bit Android. There is no ARM32 or x86 APK in this release. |
 | `INSTALL_FAILED_OLDER_SDK` | Check `adb shell getprop ro.build.version.sdk`; this release requires API 26 or newer. |
 | `INSTALL_FAILED_VERSION_DOWNGRADE` | An installed copy has a higher version code. Use a compatible newer build; do not force a downgrade as a routine fix. |
 | `INSTALL_FAILED_INSUFFICIENT_STORAGE` | Free internal storage and retry. APK size is smaller than the installed footprint, particularly with extracted native libraries and the candidate's Python runtime. Game assets and import staging require additional space. |

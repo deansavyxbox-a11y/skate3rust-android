@@ -91,6 +91,24 @@ Afterward, byte comparisons confirmed preservation of all six files: `touch_cont
 
 This establishes successful same-version reinstall on this phone, not a fresh install, cross-version upgrade, or 16 KB runtime test. The viewer has not responded with device details; no actual installation failure code has been obtained. Evidence files and the private settings backups remain outside the repository under the local audit output directory.
 
+## Viewer model follow-up — 2026-10-16
+
+The user subsequently received two reported device names: **vivo 1726** and **Samsung Galaxy A6+**. The reports do not yet include an Android version, exact A6+ model/firmware variant, installed-package state, attempted APK filename, APK checksum or ADB `Failure [...]` code. They are leads, not confirmed causes of either installation failure. The original audit above remains a dated record of what was known on 2026-10-14.
+
+The vivo 1726 is commonly identified as a Y83 Pro; [vivo lists that model with Android 8.1 and a Helio P22](https://shop.vivo.com/in/product/10037), which would meet the APK's API 26 floor. That does not establish this viewer's supported ABIs or Vulkan feature declaration. The [Galaxy A6+ shipped with Android 8.0 and Snapdragon 450](https://news.samsung.com/br/samsung-apresenta-galaxy-a6-no-brasil), also meeting the SDK floor as sold. A [Samsung Members report from an A6+ owner](https://r2.community.samsung.com/t5/Galaxy-A/About-Samsung-galaxy-A6-32-bit-Android-Pie-Software/m-p/1639647/highlight/true) describes a 32-bit Android build; if the viewer's device reports only `armeabi-v7a`, an ARM64-only APK cannot install even though the processor itself is 64-bit. This remains a hypothesis until checked on that device. Neither model name establishes the required Vulkan hardware level 0.
+
+Ask each viewer for their attempted release filename, Android version, whether an older `com.skate3rust.android` app is installed, and the complete output of:
+
+```text
+adb shell getprop ro.product.model
+adb shell getprop ro.build.version.sdk
+adb shell getprop ro.product.cpu.abilist
+adb shell pm list features
+adb install -r skate3rust-android-0.2.0-rc2-arm64.apk
+```
+
+The last command should use the actual downloaded APK filename. Redact device serials and private data before posting. If `arm64-v8a` is absent, `INSTALL_FAILED_NO_MATCHING_ABIS` is expected for the current release. If ARM64 is present, retain the actual install failure code and investigate signing, version, policy, storage or package parsing accordingly. A successful install followed by graphics failure is a separate Vulkan/runtime issue. Do not change SDK, Vulkan or signing requirements based solely on these model names.
+
 ## Pending device procedure
 
 1. Connect and authorize ADB; record `adb devices -l`, model, SDK, `ro.product.cpu.abilist`, `getconf PAGE_SIZE`, available internal storage and Vulkan feature declarations. Redact serial numbers from public reports.
