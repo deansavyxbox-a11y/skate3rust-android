@@ -169,7 +169,7 @@ final class AssetManifest {
             writeAtomically(new File(root,"sha256sum.checks"),checks.toString());
         } catch(JSONException|ArithmeticException e){throw new IOException("Could not refresh settings integrity metadata",e);}
     }
-    private static void writeAtomically(File target,String content)throws IOException {
+    static void writeAtomically(File target,String content)throws IOException {
         File temporary=new File(target.getParentFile(),target.getName()+".tmp");
         try(FileOutputStream output=new FileOutputStream(temporary)) {
             output.write(content.getBytes(StandardCharsets.UTF_8));output.getFD().sync();

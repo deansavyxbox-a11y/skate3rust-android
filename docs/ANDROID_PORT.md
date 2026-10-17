@@ -1,8 +1,8 @@
 # Android setup and development
 
-## Install and import on the phone (0.2.0-rc2 prerelease)
+## Install and import on the phone (0.2.0-rc4 prerelease)
 
-Download `0.2.0-rc2` from the [official prerelease](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc2) and verify its SHA-256 against the release's `SHA256SUMS.txt`. It offers prepared ZIP and direct ISO import on the phone. Update with the same signer without uninstalling; uninstalling or clearing storage removes imported assets and settings. See [installation troubleshooting](../README.md#if-android-says-app-not-installed).
+Download `0.2.0-rc4` from the [official prerelease](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc4) and verify its SHA-256 against the release's `SHA256SUMS.txt`. It offers prepared ZIP and direct ISO import on the phone. Update with the same signer without uninstalling; uninstalling or clearing storage removes imported assets and settings. See [installation troubleshooting](../README.md#if-android-says-app-not-installed).
 
 1. Install the prerelease APK and launch Skate 3 Rust. Existing installations remain available through **PLAY**.
 2. Choose one input:
@@ -12,6 +12,8 @@ Download `0.2.0-rc2` from the [official prerelease](https://github.com/deansavyx
 4. Wait for **Import complete** and tap **PLAY**. First gameplay loading can take tens of seconds. The original ZIP/ISO is not deleted. Imported assets are checked before publication, and a previous generation is retained for **RESTORE PREVIOUS ASSETS**.
 
 The full ISO test used a 7.84 GB source with about 38 GB free internal storage after placing the ISO on the phone. Private ISO copy, extracted disc, intermediates and new assets coexist during processing; storage varies by input. This is not a guaranteed minimum. Prepared ZIP import uses less conversion workspace. If a job fails, read its message and preserve the original input. After an interrupted process, Retry restarts conversion; it does not resume all intermediate work. Cancellation may wait for the current converter stage.
+
+Development builds from `feature/iso-space-start-map` add a **STARTING MAP** picker before **PLAY**. Choose an installed map such as StartPark if a larger map stalls or runs out of memory during loading. The choice is saved when you tap **PLAY**. These builds also try to read a seekable ISO directly from Android's document provider, avoiding a second full-size ISO in app storage. Providers that expose only a stream still use a private copy, which is deleted after extraction. Extraction, conversion, and the new installation still need several GB of free internal storage. These changes are not part of the published rc4 APK.
 
 ### Prepare a ZIP on Windows
 

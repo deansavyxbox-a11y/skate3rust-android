@@ -64,6 +64,8 @@ See the [step-by-step setup guide](docs/ANDROID_PORT.md). Choose **IMPORT PREPAR
 
 Direct ISO import is experimental and needs substantial free internal storage. The successful test began with about 38 GB free, with the source ISO already on the phone; this is a tested condition, not a universal space requirement. If the ISO is missing from the Downloads picker, open the picker's sidebar and browse internal storage → Download. If Android stops the job, reopen the app and retry; conversion restarts rather than resuming every intermediate step. Keep the source file until import succeeds. See [ISO validation and limitations](android/ISO_IMPORT_VALIDATION.md).
 
+The development branch adds a starting-map picker before Play and skips the full private ISO copy when the selected Android document supports random access. The published rc4 APK does not include these changes. A streaming-only document provider still requires a temporary ISO copy; conversion workspace is needed in either case. See the [setup guide](docs/ANDROID_PORT.md) for details.
+
 ## Known limitations
 
 Gameplay parity remains in progress. Some park decals/materials are incomplete; dynamic park objects use static initial placements. Audio parity, wardrobe expansion, multiplayer, broad device compatibility and sustained thermal performance are not established for Android. There is no automatic Android updater. See the guide for validation scope.
