@@ -2,7 +2,7 @@
 
 Experimental native ARM64 Android port of [SK8-ENGINE/skate-3-rust-engine](https://github.com/SK8-ENGINE/skate-3-rust-engine), built with Rust and Bevy. Based on upstream build 29 (`60efdef86600d8d8d4feb4b7c608fa0efd0643d7`).
 
-[Download the Android APK](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc3) · [Setup and build guide](docs/ANDROID_PORT.md) · [Contributing](CONTRIBUTING.md)
+[Download the Android APK](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc4) · [Setup and build guide](docs/ANDROID_PORT.md) · [Contributing](CONTRIBUTING.md)
 
 ## What works
 
@@ -11,13 +11,14 @@ Experimental native ARM64 Android port of [SK8-ENGINE/skate-3-rust-engine](https
 - USB controller support and multitouch sticks/buttons, with automatic controller detection.
 - Movable touch controls: Menu → Graphics → Touch controls. Drag controls, then Save. Cancel discards edits; Reset previews defaults until saved.
 - Android launcher icon and branded loading screen with native loading status.
-- On-phone prepared ZIP import and direct conversion of your own Xbox 360 ISO. Both paths completed on RedMagic 10 Pro. Prepared ZIP import also completed on Retroid Pocket 3 Plus; direct ISO conversion there has not been tested. `0.2.0-rc3` shows live conversion steps and map counts instead of a misleading `0.0 MB` counter.
+- On-phone prepared ZIP import and direct conversion of your own Xbox 360 ISO. Both paths completed on RedMagic 10 Pro. Prepared ZIP import also completed on Retroid Pocket 3 Plus; direct ISO conversion there has not been tested. The setup screen shows live conversion steps and map counts.
+- Android skater rendering uses uniform-buffer skinning. A Fold 5 tester reported that the matching diagnostic change fixed a distorted skater model and movement; the rc4 APK itself has not been tested on that device.
 
-Gameplay was tested on RedMagic 10 Pro (Android 16, Adreno 830). On Retroid Pocket 3 Plus (Android 11), the exact public APK installed and StartPark rendered, but loading University triggered Android's low-memory killer. StartPark showed 9 FPS in one screenshot; sustained performance and controls were not tested on that device. Other devices remain unverified. Requires ARM64, Android 8 or newer and compatible Vulkan support; this is not a compatibility guarantee.
+Gameplay was tested on RedMagic 10 Pro (Android 16, Adreno 830). On Retroid Pocket 3 Plus (Android 11), the earlier public APK installed and StartPark rendered, but loading University triggered Android's low-memory killer. StartPark showed 9 FPS in one screenshot; sustained performance and controls were not tested on that device. Other devices remain unverified. Requires ARM64, Android 8 or newer and compatible Vulkan support; this is not a compatibility guarantee.
 
 ## Before downloading
 
-**The APK does not include Skate 3 game assets.** You need your own Xbox 360 game copy. The `0.2.0-rc3` prerelease offers prepared ZIP import or direct ISO conversion on the phone. Installing only an APK does not provide the original maps or characters.
+**The APK does not include Skate 3 game assets.** You need your own Xbox 360 game copy. The `0.2.0-rc4` prerelease offers prepared ZIP import or direct ISO conversion on the phone. Installing only an APK does not provide the original maps or characters.
 
 Follow the [setup guide](docs/ANDROID_PORT.md). Do not upload ISOs, extracted game files, converted maps, textures or other proprietary assets to this repository or its issues.
 
@@ -25,16 +26,16 @@ This is an experimental, debuggable APK because the current asset installer uses
 
 ## Installing the public APK
 
-Download `skate3rust-android-0.2.0-rc3-arm64.apk` and `SHA256SUMS.txt` from the [official prerelease](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc3). GitHub's source-code ZIP is not an installable app. This APK supports **64-bit ARM Android installations (`arm64-v8a`), Android 8 / API 26 or newer**. A 64-bit processor running a 32-bit Android system is insufficient. Compatible Vulkan graphics are also required for gameplay; meeting the installation requirements does not guarantee rendering compatibility. Devices with 16 KB memory pages are not yet cleared for this build.
+Download `skate3rust-android-0.2.0-rc4-arm64.apk` and `SHA256SUMS.txt` from the [official prerelease](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc4). GitHub's source-code ZIP is not an installable app. This APK supports **64-bit ARM Android installations (`arm64-v8a`), Android 8 / API 26 or newer**. A 64-bit processor running a 32-bit Android system is insufficient. Compatible Vulkan graphics are also required for gameplay; meeting the installation requirements does not guarantee rendering compatibility. Devices with 16 KB memory pages are not yet cleared for this build.
 
 On the phone, open the APK and allow installation from the browser or file manager you used when Android requests it. Managed-device policies may restrict sideloading. Keep your device's security protections enabled; if installation is blocked, capture the message before changing anything.
 
 For a Windows PC, verify the download and install with [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools):
 
 ```powershell
-Get-FileHash .\skate3rust-android-0.2.0-rc3-arm64.apk -Algorithm SHA256
+Get-FileHash .\skate3rust-android-0.2.0-rc4-arm64.apk -Algorithm SHA256
 adb devices -l
-adb install -r .\skate3rust-android-0.2.0-rc3-arm64.apk
+adb install -r .\skate3rust-android-0.2.0-rc4-arm64.apk
 ```
 
 Compare the hash with `SHA256SUMS.txt` from that same release. The `-r` option requests reinstall/update while retaining app data, provided the package and signing certificate are compatible. Do not uninstall or clear app storage as a routine update step: this removes imported assets, settings and your touch layout. APK installation and [game-asset setup](docs/ANDROID_PORT.md) are separate steps.
@@ -57,7 +58,7 @@ That message alone does not identify the cause. Use the ADB command above and in
 
 These are troubleshooting possibilities, **not confirmed explanations for the reported viewer failure**. The [published APK audit](docs/APK_COMPATIBILITY_AUDIT.md) records the exact artifact checks, certificate fingerprint and current testing gaps. Debug signing alone does not establish that a fresh install must fail.
 
-## On-phone setup (0.2.0-rc3 prerelease)
+## On-phone setup (0.2.0-rc4 prerelease)
 
 See the [step-by-step setup guide](docs/ANDROID_PORT.md). Choose **IMPORT PREPARED ASSETS (.ZIP)** for an Android package prepared on a PC, or **IMPORT XBOX 360 ISO** to convert your own disc image entirely on the phone. Keep the app open and the phone powered during conversion. The original file is retained; a new installation is validated before it replaces the active assets. **RESTORE PREVIOUS ASSETS** returns to the retained previous generation.
 
@@ -74,6 +75,8 @@ This prerelease is not cleared for 16 KB page-size devices: its embedded FreeTyp
 The [0.2.0-rc2 prerelease](android/RELEASE_NOTES_0.2.0_RC2.md) adjusts DownTownSkatePark's default start above the raised platform. The user confirmed the repaired spawn looks good on RedMagic 10 Pro; see the [spawn validation report](android/DOWNTOWN_SPAWN_VALIDATION.md) for scope and remaining checks.
 
 The [0.2.0-rc3 prerelease](android/RELEASE_NOTES_0.2.0_RC3.md) improves the direct ISO import progress display. During conversion, it shows the current step and map count without claiming that zero bytes have been processed or estimating a percentage.
+
+The [0.2.0-rc4 prerelease](android/RELEASE_NOTES_0.2.0_RC4.md) uses uniform-buffer skinning on Android to address the skater corruption reported in [issue #1](https://github.com/deansavyxbox-a11y/skate3rust-android/issues/1). The reporter confirmed the diagnostic change on a Galaxy Z Fold 5; the new APK also requires its own validation.
 
 ## Source and attribution
 

@@ -193,7 +193,10 @@ impl SkinUniformInfo {
 /// storage buffers aren't supported on the current platform.
 pub fn skins_use_uniform_buffers(limits: &WgpuLimits) -> bool {
     static SKINS_USE_UNIFORM_BUFFERS: OnceLock<bool> = OnceLock::new();
-    *SKINS_USE_UNIFORM_BUFFERS.get_or_init(|| limits.max_storage_buffers_per_shader_stage == 0)
+    // Android/Adreno storage-buffer skinning can corrupt skater meshes (issue #1).
+    *SKINS_USE_UNIFORM_BUFFERS.get_or_init(|| {
+        cfg!(target_os = "android") || limits.max_storage_buffers_per_shader_stage == 0
+    })
 }
 
 /// Uploads the buffers containing the joints to the GPU.
