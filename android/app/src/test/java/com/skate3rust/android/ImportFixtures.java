@@ -21,6 +21,9 @@ final class ImportFixtures {
         return root;
     }
     static void manifest(File root,String map) throws Exception {
+        manifest(root,new String[]{map});
+    }
+    static void manifest(File root,String... maps) throws Exception {
         JSONArray entries=new JSONArray(); long total=0;
         try(var paths=Files.walk(root.toPath())) {
             for(Path file:paths.filter(Files::isRegularFile).sorted().toList()) {
@@ -32,7 +35,7 @@ final class ImportFixtures {
         }
         write(root,"transfer-manifest.json",entries.toString());
         write(root,"complete.json",new JSONObject().put("version",1).put("files",entries.length()).put("bytes",total)
-            .put("map",map).put("maps",new JSONArray().put(map)).toString());
+            .put("map",maps[0]).put("maps",new JSONArray(maps)).toString());
     }
     static String sha(byte[] bytes)throws Exception{return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));}
     static void write(File root,String name,String text)throws IOException {

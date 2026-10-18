@@ -49,7 +49,7 @@ public final class ImportService extends Service {
             InstallationStore store=new InstallationStore(getFilesDir());store.recover();
             store.discardInterruptedStaging(interruptedId);
             getSharedPreferences(PREFS,MODE_PRIVATE).edit().remove(PREF_ABANDONED_ID).commit();
-            source=ImportSource.open(this,uri);
+            source=KIND_ISO.equals(kind)?ImportSource.openIso(this,uri):ImportSource.open(this,uri);
             state.report(ImportModel.Phase.INSPECTING,0,source.size,"Checking prepared asset package");persist(null,null);updateNotification();
             stage=store.newStaging(state.snapshot().id);
             final File target=stage;
@@ -65,11 +65,14 @@ public final class ImportService extends Service {
                 if(!ImportSource.displayName(this,uri).toLowerCase(java.util.Locale.ROOT).endsWith(".iso"))
                     throw new IOException("Select an Xbox 360 .iso image.");
                 File work=new File(stage,"conversion");if(!work.mkdirs())throw new IOException("Could not prepare private conversion storage.");
-                File copiedIso=new File(work,"source.iso");
-                copyIso(source,copiedIso);
+                File copiedIso=null;
+                if(!source.isSeekable()) {
+                    copiedIso=new File(work,"source.iso");
+                    copyIso(source,copiedIso);
+                }
                 File disc=new File(work,"disc");if(!disc.mkdirs())throw new IOException("Could not prepare private disc extraction storage.");
-                state.report(ImportModel.Phase.CONVERTING,0,-1,"Reading the selected Xbox disc");persist(null,null);updateNotification();
-                NativeAssetValidator.nativeExtractIso(copiedIso.getAbsolutePath(),disc.getAbsolutePath(),new NativeAssetValidator.Progress(){
+                state.report(ImportModel.Phase.CONVERTING,0,-1,source.isSeekable()?"Reading Xbox disc directly; no ISO copy needed":"Reading copied Xbox disc");persist(null,null);updateNotification();
+                NativeAssetValidator.Progress observer=new NativeAssetValidator.Progress(){
                     public boolean isCancelled(){
                         if(getFilesDir().getUsableSpace()<64L*1024*1024){storageInsufficient.set(true);return true;}
                         return cancelled.get()||Thread.currentThread().isInterrupted();
@@ -78,8 +81,11 @@ public final class ImportService extends Service {
                         state.report(ImportModel.Phase.CONVERTING,completed,total,"Extracting owned disc files");
                         if(progressThrottle.shouldEmit(ImportModel.Phase.CONVERTING,SystemClock.elapsedRealtime())){persist(null,null);updateNotification();}
                     }
-                });
+                };
+                if(source.isSeekable())NativeAssetValidator.nativeExtractIsoFd(source.fd(),disc.getAbsolutePath(),observer);
+                else NativeAssetValidator.nativeExtractIso(copiedIso.getAbsolutePath(),disc.getAbsolutePath(),observer);
                 checkCancelled();
+                if(copiedIso!=null)java.nio.file.Files.delete(copiedIso.toPath());
                 IsoAssetConverter.convert(this,disc,target,work,new IsoAssetConverter.Callbacks(){
                     public void report(String message){mapProgress=ImportProgressText.mapContext(mapProgress,message);state.report(ImportModel.Phase.CONVERTING,0,-1,message);persist(null,null);updateNotification();}
                     public void checkCancelled()throws IOException{ImportService.this.checkCancelled();}

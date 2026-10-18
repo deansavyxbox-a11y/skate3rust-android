@@ -8,6 +8,7 @@ import android.view.*;
 import android.widget.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /** Setup gate shown before the native gameplay process initializes. */
 public final class SetupActivity extends Activity {
@@ -18,6 +19,8 @@ public final class SetupActivity extends Activity {
     private int pendingType;
     private String pendingName;
     private Button importButton,playButton;
+    private Spinner startingMap;
+    private TextView startingMapLabel;
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener jobListener=(prefs,key)->{
         if(ImportProgressText.shouldRefresh(key))refreshJobState();
     };
@@ -40,7 +43,9 @@ public final class SetupActivity extends Activity {
         LinearLayout page=new LinearLayout(this);page.setOrientation(LinearLayout.VERTICAL);page.setGravity(Gravity.CENTER);page.setPadding(dp(28),dp(20),dp(28),dp(20));page.setBackgroundColor(0xff09151f);
         TextView title=new TextView(this);title.setText("SKATE 3 RUST");title.setTextSize(26);title.setTextColor(0xffff592d);page.addView(title,wrap());
         status=new TextView(this);status.setTextColor(0xffeeeeee);status.setTextSize(16);status.setGravity(Gravity.CENTER);page.addView(status,wrap());
-        playButton=button("PLAY",()->startActivity(new Intent(this,LaunchActivity.class)));page.addView(playButton,buttonLayout());
+        startingMapLabel=new TextView(this);startingMapLabel.setText("STARTING MAP\nTry StartPark first on a lower-memory phone.");startingMapLabel.setTextColor(0xffeeeeee);startingMapLabel.setGravity(Gravity.CENTER);page.addView(startingMapLabel,wrap());
+        startingMap=new Spinner(this);page.addView(startingMap,buttonLayout());
+        playButton=button("PLAY",this::play);page.addView(playButton,buttonLayout());
         Button zip=button("IMPORT PREPARED ASSETS (.ZIP)",()->pick(PICK_ZIP));page.addView(zip,buttonLayout());
         Button iso=button("IMPORT XBOX 360 ISO",()->pick(PICK_ISO));page.addView(iso,buttonLayout());
         selected=new TextView(this);selected.setTextColor(0xffdddddd);selected.setGravity(Gravity.CENTER);page.addView(selected,wrap());
@@ -52,9 +57,25 @@ public final class SetupActivity extends Activity {
     private void refreshStatus() {
         boolean playable=store.isPlayable();
         String mapSummary="";
-        if(playable)try{mapSummary=" · "+String.join(", ",AssetManifest.read(new File(getFilesDir(),"installation")).maps);}catch(IOException ignored){}
+        if(playable)try {
+            List<String> maps=store.availableStartingMaps();
+            String current=store.currentStartingMap();
+            mapSummary=" · "+maps.size()+" maps installed";
+            ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,maps);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            startingMap.setAdapter(adapter);
+            startingMap.setSelection(Math.max(0,maps.indexOf(current)));
+        }catch(IOException error){playable=false;}
         status.setText(playable?"Assets ready"+mapSummary:"No playable asset installation yet. Choose one of the import options below.");
         playButton.setEnabled(playable);
+        startingMap.setVisibility(playable?View.VISIBLE:View.GONE);
+        startingMapLabel.setVisibility(playable?View.VISIBLE:View.GONE);
+    }
+    private void play() {
+        Object selectedMap=startingMap.getSelectedItem();
+        if(selectedMap==null){showNotice("Choose an installed starting map before playing.");return;}
+        try {store.selectStartingMap(selectedMap.toString());startActivity(new Intent(this,LaunchActivity.class));}
+        catch(IOException error){showNotice("Could not save starting map: "+error.getMessage());}
     }
     private void pick(int type) {
         Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
@@ -71,7 +92,8 @@ public final class SetupActivity extends Activity {
     private void showSelection() {
         selected.setText("Selected: "+pendingName+"\nOriginal file will remain untouched.");
         importButton.setEnabled(pendingType==PICK_ZIP||pendingType==PICK_ISO);
-        showNotice(pendingType==PICK_ZIP?"Prepared asset ZIP. Game data is copied into private app storage.":"The selected Xbox 360 ISO will be copied privately, converted on this phone, then validated before installation.");
+        if(pendingType==PICK_ZIP)showNotice("Prepared asset ZIP. Game data is copied into private app storage.");
+        else showNotice("A seekable ISO can be read directly, saving a full temporary ISO copy. Some document providers still require a copy. Extraction and conversion need several GB of free app storage (currently "+(getFilesDir().getUsableSpace()/(1024*1024*1024))+" GB available).");
     }
     private void startImport() {
         if(pendingUri==null)return;

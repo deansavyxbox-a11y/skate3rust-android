@@ -11,6 +11,19 @@ public class InstallationStoreTest {
     @Rule public TemporaryFolder temp=new TemporaryFolder();
     private final ImportModel.Progress progress=(phase,done,total,item)->{};
     private final ImportModel.Cancellation cancel=()->{};
+    @Test public void selectsInstalledStartingMapAndKeepsManifestValid()throws Exception {
+        File root=temp.newFolder(),live=ImportFixtures.create(new File(root,"installation"),"University");
+        ImportFixtures.write(live,"maps/StartPark.skate","small fixture map");
+        ImportFixtures.manifest(live,"University","StartPark");
+        InstallationStore store=new InstallationStore(root);
+        assertEquals("University",store.currentStartingMap());
+        assertEquals(java.util.List.of("University","StartPark"),store.availableStartingMaps());
+        store.selectStartingMap("StartPark");
+        assertEquals("StartPark",store.currentStartingMap());
+        AssetManifest.read(live).verify(live,progress,cancel);
+        assertThrows(IOException.class,()->store.selectStartingMap("MissingPark"));
+        assertEquals("StartPark",store.currentStartingMap());
+    }
     @Test public void publishesValidatedStaging()throws Exception {
         File root=temp.newFolder(); InstallationStore store=new InstallationStore(root);
         File staging=ImportFixtures.create(store.newStaging("first"),"University");

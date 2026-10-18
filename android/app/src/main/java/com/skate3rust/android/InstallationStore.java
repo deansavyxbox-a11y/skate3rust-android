@@ -38,6 +38,39 @@ final class InstallationStore {
         }
     }
     boolean isPlayable(){return playable(live);}
+    List<String> availableStartingMaps()throws IOException {
+        AssetManifest manifest=AssetManifest.read(live);manifest.verifyRuntime(live);
+        return manifest.maps;
+    }
+    String currentStartingMap()throws IOException {
+        List<String> maps=availableStartingMaps();
+        File selection=new File(live,"settings/default-map.json");
+        if(selection.isFile()) {
+            String value=AssetManifest.json(selection).trim();
+            for(String map:maps)if(value.equals("\"maps/"+map+".skate\""))return map;
+        }
+        return maps.contains("University")?"University":maps.get(0);
+    }
+    void selectStartingMap(String map)throws IOException {
+        try(LockHandle ignored=lock()) {
+            recoverLocked();
+            if(map==null||!availableStartingMaps().contains(map))throw new IOException("Starting map is not installed");
+            File selection=new File(live,"settings/default-map.json");
+            String original=selection.isFile()?AssetManifest.json(selection):null;
+            String next="\"maps/"+map+".skate\"";
+            if(next.equals(original))return;
+            try {
+                AssetManifest.writeAtomically(selection,next);
+                AssetManifest.refreshSettings(live);
+            } catch(IOException failure) {
+                if(original!=null) {
+                    try {AssetManifest.writeAtomically(selection,original);AssetManifest.refreshSettings(live);}
+                    catch(IOException restoreFailure){failure.addSuppressed(restoreFailure);}
+                }
+                throw failure;
+            }
+        }
+    }
     private boolean playable(File directory) {
         try{AssetManifest manifest=AssetManifest.read(directory);manifest.verifyRuntime(directory);return true;}catch(IOException e){return false;}
     }
