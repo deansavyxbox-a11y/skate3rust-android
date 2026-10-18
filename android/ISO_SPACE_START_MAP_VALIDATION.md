@@ -1,6 +1,6 @@
 # ISO storage and starting-map validation — 2026-10-17
 
-This report covers the development branch `feature/iso-space-start-map`. The published `0.2.0-rc4` APK does not include these changes.
+This report records the development validation of `feature/iso-space-start-map`, which is included in `0.2.0-rc5`. The earlier `0.2.0-rc4` APK does not include these changes.
 
 ## Changes
 
@@ -19,4 +19,4 @@ This report covers the development branch `feature/iso-space-start-map`. The pub
 
 ## Remaining limits
 
-The stream-copy fallback is retained and covered by the previously working code path, but a nonseekable document provider was not available for a new on-device test. Other ISO variants, devices and low-storage conditions remain unverified. StartPark loaded and rendered on the RedMagic; this does not establish that a Redmi Note 7 Pro can run the app or that its reported black/logo screen has the same cause. No proprietary assets are included in the repository or APK. This branch has not been published as a public release.
+The stream-copy fallback is retained and covered by the previously working code path, but a nonseekable document provider was not available for a new on-device test. Other ISO variants, devices and low-storage conditions remain unverified. StartPark loaded and rendered on the RedMagic; this does not establish that a Redmi Note 7 Pro can run the app or that its reported black/logo screen has the same cause. No proprietary assets are included in the repository or APK.

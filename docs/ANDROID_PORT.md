@@ -1,19 +1,19 @@
 # Android setup and development
 
-## Install and import on the phone (0.2.0-rc4 prerelease)
+## Install and import on the phone (0.2.0-rc5 prerelease)
 
-Download `0.2.0-rc4` from the [official prerelease](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc4) and verify its SHA-256 against the release's `SHA256SUMS.txt`. It offers prepared ZIP and direct ISO import on the phone. Update with the same signer without uninstalling; uninstalling or clearing storage removes imported assets and settings. See [installation troubleshooting](../README.md#if-android-says-app-not-installed).
+Download `0.2.0-rc5` from the [official prerelease](https://github.com/deansavyxbox-a11y/skate3rust-android/releases/tag/android-v0.2.0-rc5) and verify its SHA-256 against the release's `SHA256SUMS.txt`. It offers prepared ZIP and direct ISO import on the phone. Update with the same signer without uninstalling; uninstalling or clearing storage removes imported assets and settings. See [installation troubleshooting](../README.md#if-android-says-app-not-installed).
 
 1. Install the prerelease APK and launch Skate 3 Rust. Existing installations remain available through **PLAY**.
 2. Choose one input:
    - **IMPORT PREPARED ASSETS (.ZIP)**: select an Android asset package prepared using the commands below. A source-code ZIP or arbitrary game-data ZIP is not this format.
    - **IMPORT XBOX 360 ISO**: select your own Xbox 360 `.iso` image. If Downloads hides it, use the picker sidebar → internal storage/device name → Download and browse to the file.
-3. Tap **CONTINUE IMPORT**. Keep the app open, the phone powered, and enough internal storage available. Progress reports phases; conversion may take time without a byte total. The ISO is copied privately, extracted and converted on the phone. Internet access is not required for game-asset conversion.
-4. Wait for **Import complete** and tap **PLAY**. First gameplay loading can take tens of seconds. The original ZIP/ISO is not deleted. Imported assets are checked before publication, and a previous generation is retained for **RESTORE PREVIOUS ASSETS**.
+3. Tap **CONTINUE IMPORT**. Keep the app open, the phone powered, and enough internal storage available. Progress reports phases; conversion may take time without a byte total. A seekable ISO is read directly; a streaming-only provider uses a temporary private copy. The game data is extracted and converted on the phone. Internet access is not required for game-asset conversion.
+4. Wait for **Import complete**, choose an installed **STARTING MAP**, then tap **PLAY**. Try StartPark first if a larger map stalls on a lower-memory phone. First gameplay loading can take tens of seconds. The original ZIP/ISO is not deleted. Imported assets are checked before publication, and a previous generation is retained for **RESTORE PREVIOUS ASSETS**.
 
-The full ISO test used a 7.84 GB source with about 38 GB free internal storage after placing the ISO on the phone. Private ISO copy, extracted disc, intermediates and new assets coexist during processing; storage varies by input. This is not a guaranteed minimum. Prepared ZIP import uses less conversion workspace. If a job fails, read its message and preserve the original input. After an interrupted process, Retry restarts conversion; it does not resume all intermediate work. Cancellation may wait for the current converter stage.
+The rc5 importer test used a 7.84 GB source with about 43 GB free internal storage after placing the ISO on the phone. The phone's document provider exposed a seekable file, so no private ISO copy was made. An extracted disc, intermediates and new assets still coexisted during processing; storage varies by input. A streaming-only provider also needs a private ISO copy until extraction finishes. These observations are not a guaranteed minimum. Prepared ZIP import uses less conversion workspace. If a job fails, read its message and preserve the original input. After an interrupted process, Retry restarts conversion; it does not resume all intermediate work. Cancellation may wait for the current converter stage.
 
-Development builds from `feature/iso-space-start-map` add a **STARTING MAP** picker before **PLAY**. Choose an installed map such as StartPark if a larger map stalls or runs out of memory during loading. The choice is saved when you tap **PLAY**. These builds also try to read a seekable ISO directly from Android's document provider, avoiding a second full-size ISO in app storage. Providers that expose only a stream still use a private copy, which is deleted after extraction. Extraction, conversion, and the new installation still need several GB of free internal storage. These changes are not part of the published rc4 APK.
+The starting-map choice is saved when you tap **PLAY**. Seekable ISO reading avoids a second full-size ISO in app storage; providers that expose only a stream still use a private copy, which is deleted after extraction. Extraction, conversion, and the new installation still need several GB of free internal storage.
 
 ### Prepare a ZIP on Windows
 
